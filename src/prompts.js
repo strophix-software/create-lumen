@@ -81,6 +81,7 @@ export function formatConfig(responses) {
     `• ${chalk.bold("Linter:")} ${responses.linter === "oxlint" ? chalk.green("Oxlint") : responses.linter === "biome" ? chalk.cyan("Biome") : responses.linter === "eslint" ? chalk.yellow("ESLint") : chalk.red("None")}`,
     `• ${chalk.bold("Formatter:")} ${responses.formatter === "oxfmt" ? chalk.green("Oxfmt") : responses.formatter === "prettier" ? chalk.yellow("Prettier") : chalk.red("None")}`,
     `• ${chalk.bold("Docs:")} ${chalk.cyan(docsLang)}`,
+    `• ${chalk.bold("Agent Docs:")} ${responses.agentDocs ? chalk.green("Yes") : chalk.gray("No")}`,
     `• ${chalk.bold("Git:")} ${responses.gitInit ? chalk.green("Yes") : chalk.red("No")}`,
     `• ${chalk.bold("README:")} ${responses.readme ? chalk.green("Yes") : chalk.red("No")}`
   );
@@ -199,8 +200,8 @@ export async function getUserInputs(
   if (quickSetup) {
     const responses = getDefaultResponses(framework, { projectName });
     if (initialArch) responses.architecture = initialArch;
-    await saveConfigFn(responses);
-    return responses;
+    await saveConfigFn(sanitizeResponsesForFramework(framework, responses));
+    return sanitizeResponsesForFramework(framework, responses);
   }
 
   let oldConfig = null;
@@ -558,6 +559,15 @@ export async function getUserInputs(
       },
     },
     {
+      id: "agentDocs",
+      message: "Generate .lumen/ agent context for AI assistants?",
+      getOptions: () => [
+        { label: "No (default)", value: false },
+        { label: "Yes", value: true, hint: "Emits .lumen/ with project, architecture and conventions" },
+      ],
+      defaultInitial: false,
+    },
+    {
       id: "docsLanguage",
       message: "Which docs language do you want?",
       getOptions: () => [
@@ -614,12 +624,14 @@ export async function getUserInputs(
     agentDocs,
     ...picked
   } = responses;
-  const finalResponses = {
+  // Final safety net: BACK-navigation can reselect the framework after other
+  // answers were collected, so re-validate everything before persisting.
+  const finalResponses = sanitizeResponsesForFramework(framework, {
     projectName,
     frameworkName: framework.name,
     frameworkVariant: framework.variant,
     ...picked,
-  };
+  });
   if (bundler !== undefined) {
     finalResponses.bundler = bundler;
   }

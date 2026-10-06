@@ -180,6 +180,78 @@ export const PRESETS = {
     gitInit: true,
     readme: true,
   },
+  "next-ts": {
+    frameworkName: "next",
+    frameworkVariant: "app-router",
+    architecture: "feature-based",
+    language: "ts",
+    cssFramework: "tailwind",
+    testing: "vitest",
+    router: false,
+    bundler: "turbopack",
+    stateManagement: "none",
+    iconLibrary: "none",
+    apiClient: "none",
+    linter: "eslint",
+    formatter: "prettier",
+    docsLanguage: "en",
+    gitInit: true,
+    readme: true,
+  },
+  "next-js": {
+    frameworkName: "next",
+    frameworkVariant: "app-router",
+    architecture: "feature-based",
+    language: "js",
+    cssFramework: "tailwind",
+    testing: "vitest",
+    router: false,
+    bundler: "turbopack",
+    stateManagement: "none",
+    iconLibrary: "none",
+    apiClient: "none",
+    linter: "eslint",
+    formatter: "prettier",
+    docsLanguage: "en",
+    gitInit: true,
+    readme: true,
+  },
+  "next-pages-ts": {
+    frameworkName: "next",
+    frameworkVariant: "pages-router",
+    architecture: "feature-based",
+    language: "ts",
+    cssFramework: "tailwind",
+    testing: "vitest",
+    router: false,
+    bundler: "turbopack",
+    stateManagement: "none",
+    iconLibrary: "none",
+    apiClient: "none",
+    linter: "eslint",
+    formatter: "prettier",
+    docsLanguage: "en",
+    gitInit: true,
+    readme: true,
+  },
+  "next-pages-js": {
+    frameworkName: "next",
+    frameworkVariant: "pages-router",
+    architecture: "feature-based",
+    language: "js",
+    cssFramework: "tailwind",
+    testing: "vitest",
+    router: false,
+    bundler: "turbopack",
+    stateManagement: "none",
+    iconLibrary: "none",
+    apiClient: "none",
+    linter: "eslint",
+    formatter: "prettier",
+    docsLanguage: "en",
+    gitInit: true,
+    readme: true,
+  },
 };
 
 /**
@@ -358,6 +430,10 @@ ${chalk.bold("PRESETS")}
   ${chalk.cyan("react-type-js")}  React + Vite + JavaScript (type-based)
   ${chalk.cyan("react-none-ts")}  React + Vite + TypeScript (none)
   ${chalk.cyan("react-none-js")}  React + Vite + JavaScript (none)
+  ${chalk.cyan("next-ts")}         Next.js App Router + TypeScript (feature-based)
+  ${chalk.cyan("next-js")}         Next.js App Router + JavaScript (feature-based)
+  ${chalk.cyan("next-pages-ts")}   Next.js Pages Router + TypeScript (feature-based)
+  ${chalk.cyan("next-pages-js")}   Next.js Pages Router + JavaScript (feature-based)
 
 ${chalk.bold("EXAMPLES")}
   ${chalk.gray("# Interactive setup")}

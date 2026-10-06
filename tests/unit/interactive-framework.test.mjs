@@ -53,6 +53,7 @@ test("prompts: interactive framework step selects Next App Router and gates rout
       "Would you like to initialize a Git repository?": false,
       "Which linter do you want to use?": "eslint",
       "Which formatter do you want to use?": "prettier",
+      "Generate .lumen/ agent context for AI assistants?": false,
       "Which docs language do you want?": "en",
       "Would you like to generate a README.md and LICENSE?": false,
       "Proceed with project generation?": true,
@@ -116,6 +117,7 @@ test("prompts: shadcn selectable with tailwind, skipped without it", async () =>
         "Would you like to initialize a Git repository?": false,
         "Which linter do you want to use?": "eslint",
         "Which formatter do you want to use?": "prettier",
+        "Generate .lumen/ agent context for AI assistants?": false,
         "Which docs language do you want?": "en",
         "Would you like to generate a README.md and LICENSE?": false,
         "Proceed with project generation?": true,
@@ -173,4 +175,88 @@ test("deps: biome linter installs the biome toolchain", () => {
     language: "ts",
   });
   assert.ok(devDeps.includes("@biomejs/biome"));
+});
+
+test("prompts: agentDocs prompt records opt-in and shows in summary", async () => {
+  const responses = await getUserInputs("agent-proj", {
+    selectFn: scriptedSelect({
+      "Which framework do you want to scaffold?": "react:vite",
+      "Quick Setup? (TypeScript + Tailwind + Feature-based + Router + ESLint + Vitest)":
+        false,
+      "Which project architecture do you want?": "feature-based",
+      "Which language do you want to use?": "ts",
+      "Which CSS framework do you want to use?": "tailwind",
+      "Which UI kit do you want to use?": "none",
+      "Which testing framework do you want to set up?": "vitest",
+      "Would you like to install React Router?": true,
+      "Which state management library do you want to use?": "none",
+      "Which icon library would you like to use?": "none",
+      "Which API client do you want to use?": "none",
+      "Would you like to initialize a Git repository?": false,
+      "Which linter do you want to use?": "eslint",
+      "Which formatter do you want to use?": "prettier",
+      "Generate .lumen/ agent context for AI assistants?": true,
+      "Which docs language do you want?": "en",
+      "Would you like to generate a README.md and LICENSE?": false,
+      "Proceed with project generation?": true,
+    }),
+    noteFn: noop,
+    saveConfigFn: noop,
+    configExistsFn: async () => false,
+  });
+
+  assert.equal(responses.agentDocs, true);
+  assert.match(formatConfig({ ...responses, agentDocs: true }), /Agent Docs/);
+});
+
+test("prompts: end-of-flow sanitize coerces stale reselected answers", async () => {
+  const responses = await getUserInputs("stale-proj", {
+    selectFn: scriptedSelect({
+      "Which framework do you want to scaffold?": "next",
+      "Which Next.js router do you want to use?": "app-router",
+      "Quick Setup? (TypeScript + Tailwind + Feature-based + ESLint + Vitest)":
+        false,
+      "Which project architecture do you want?": "type-based",
+      "Which language do you want to use?": "ts",
+      "Which CSS framework do you want to use?": "tailwind",
+      "Which UI kit do you want to use?": "none",
+      "Which testing framework do you want to set up?": "vitest",
+      "Which bundler do you want to use?": "turbopack",
+      "Which deployment adapter do you want to use?": "none",
+      "Would you like to enable the React Compiler (experimental)?": false,
+      "Which state management library do you want to use?": "none",
+      "Which icon library would you like to use?": "none",
+      "Which API client do you want to use?": "none",
+      "Would you like to initialize a Git repository?": false,
+      "Which linter do you want to use?": "eslint",
+      "Which formatter do you want to use?": "prettier",
+      "Generate .lumen/ agent context for AI assistants?": false,
+      "Which docs language do you want?": "en",
+      "Would you like to generate a README.md and LICENSE?": false,
+      "Proceed with project generation?": true,
+    }),
+    noteFn: noop,
+    saveConfigFn: noop,
+    configExistsFn: async () => false,
+  });
+
+  assert.equal(responses.frameworkName, "next");
+  assert.equal(responses.architecture, "feature-based");
+  assert.equal(responses.router, false);
+});
+
+test("prompts: quickSetup sanitizes conflicting arch flag", async () => {
+  let saved;
+  const responses = await getUserInputs("sanitize-proj", {
+    quickSetup: true,
+    framework: "next",
+    initialArch: "type-based",
+    saveConfigFn: async (r) => {
+      saved = r;
+    },
+    configExistsFn: async () => false,
+  });
+
+  assert.equal(responses.architecture, "feature-based");
+  assert.equal(saved.architecture, "feature-based");
 });
