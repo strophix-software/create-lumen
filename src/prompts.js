@@ -191,6 +191,9 @@ export async function getUserInputs(
   // downstream prompts gate on the user's selection instead of the default.
   const frameworkLocked =
     rawFramework !== undefined && rawFramework !== null && String(rawFramework).trim() !== "";
+  // Variant is locked only when the flag names it explicitly (next:app-router).
+  // A bare `-f next` still asks App vs Pages interactively.
+  const variantLocked = frameworkLocked && String(rawFramework).includes(":");
   // Non-interactive quick setup: capability-aware defaults without prompting.
   if (quickSetup) {
     const responses = getDefaultResponses(framework, { projectName });
@@ -262,14 +265,9 @@ export async function getUserInputs(
           hint: "Client-side SPA with React Router",
         },
         {
-          label: "Next.js (App Router)",
-          value: "next:app-router",
+          label: "Next.js",
+          value: "next",
           hint: "Filesystem routing, server components, route handlers",
-        },
-        {
-          label: "Next.js (Pages Router)",
-          value: "next:pages-router",
-          hint: "Classic pages directory with API routes",
         },
       ],
       defaultInitial: "react:vite",
@@ -284,6 +282,33 @@ export async function getUserInputs(
             ? "Quick Setup? (TypeScript + Tailwind + Feature-based + Router + ESLint + Vitest)"
             : "Quick Setup? (TypeScript + Tailwind + Feature-based + ESLint + Vitest)";
         }
+        return null;
+      },
+    },
+    {
+      id: "nextRouter",
+      skip: () => framework.name !== "next" || variantLocked,
+      onSkip: (ans) => {
+        ans.frameworkVariant = framework.variant;
+      },
+      message: "Which Next.js router do you want to use?",
+      getOptions: () => [
+        {
+          label: "App Router",
+          value: "app-router",
+          hint: "Recommended: layouts, server components, route handlers",
+        },
+        {
+          label: "Pages Router",
+          value: "pages-router",
+          hint: "Classic pages directory with API routes",
+        },
+      ],
+      defaultInitial: "app-router",
+      onAnswer: (val, ans) => {
+        framework = normalizeFramework({ name: "next", variant: String(val) });
+        ans.frameworkName = framework.name;
+        ans.frameworkVariant = framework.variant;
         return null;
       },
     },

@@ -35,7 +35,8 @@ const noop = async () => {};
 test("prompts: interactive framework step selects Next App Router and gates router/bundler", async () => {
   const responses = await getUserInputs("next-proj", {
     selectFn: scriptedSelect({
-      "Which framework do you want to scaffold?": "next:app-router",
+      "Which framework do you want to scaffold?": "next",
+      "Which Next.js router do you want to use?": "app-router",
       "Quick Setup? (TypeScript + Tailwind + Feature-based + ESLint + Vitest)":
         false,
       "Which project architecture do you want?": "feature-based",
