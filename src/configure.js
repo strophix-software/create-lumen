@@ -166,12 +166,16 @@ async function configurePackageJson(projectPath, language) {
 
     if (!pkg.scripts) pkg.scripts = {};
 
-    pkg.scripts.dev = "vite";
-    pkg.scripts.build = "vite build";
-    pkg.scripts.preview = "vite preview";
+    // Fill defaults only — never overwrite scripts owned by the base template
+    // (Next.js bases ship next dev/build/start) or merged overlay fragments
+    // (e.g. the bundler-aware dev script). React/Vite bases already carry the
+    // vite commands, so this is a no-op there too.
+    pkg.scripts.dev ??= "vite";
+    pkg.scripts.build ??= "vite build";
+    pkg.scripts.preview ??= "vite preview";
 
     if (language === "ts") {
-      pkg.scripts.typecheck = "tsc -b";
+      pkg.scripts.typecheck ??= "tsc -b";
     }
 
     await fsp.writeFile(pkgPath, JSON.stringify(pkg, null, 2) + "\n", "utf8");
