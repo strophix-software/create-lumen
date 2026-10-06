@@ -187,6 +187,40 @@ test("cli-args: presets catalog contains valid presets", () => {
   assert.equal(PRESETS["react-none-ts"].language, "ts");
   assert.equal(PRESETS["react-none-js"].architecture, "none");
   assert.equal(PRESETS["react-none-js"].language, "js");
+  assert.ok(PRESETS["next-ts"]);
+  assert.ok(PRESETS["next-pages-js"]);
+  assert.equal(PRESETS["next-ts"].frameworkName, "next");
+  assert.equal(PRESETS["next-ts"].frameworkVariant, "app-router");
+  assert.equal(PRESETS["next-pages-js"].frameworkVariant, "pages-router");
+});
+
+test("cli-args: manifestToResponses defaults testing per framework", () => {
+  const base = {
+    manifestVersion: 2,
+    styling: { engine: "tailwind" },
+    architecture: { type: "feature-based" },
+    ui: { kit: "none" },
+    docs: { language: "en" },
+    paths: {
+      features: "src/features",
+      components: "src/components",
+      services: "src/services",
+      hooks: "src/hooks",
+      pages: "src/pages",
+      ui: "src/components/ui",
+    },
+    tooling: { language: "ts", linter: "eslint", formatter: "prettier" },
+  };
+  const next = manifestToResponses(
+    { ...base, framework: { name: "next", variant: "app-router" } },
+    "next-app"
+  );
+  assert.equal(next.testing, "none");
+  const react = manifestToResponses(
+    { ...base, framework: { name: "react", variant: "vite" } },
+    "react-app"
+  );
+  assert.equal(react.testing, "vitest");
 });
 
 test("cli-args: parses bundler, adapter, react-compiler, agent-docs, and linter flags", () => {

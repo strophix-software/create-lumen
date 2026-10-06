@@ -392,8 +392,10 @@ export function manifestToResponses(manifest, projectName) {
     docsLanguage: manifest.docs?.language || "en",
     reactCompiler: supportsCompiler ? manifest.reactCompiler : undefined,
     agentDocs: manifest.agentDocs,
-    // Sensible defaults for scaffolder conditional passes
-    testing: "vitest",
+    // Sensible defaults for scaffolder conditional passes (Next.js ships no
+    // verified test-runner overlay yet, so it defaults to none; explicit
+    // vitest/jest selection still applies the standard overlays)
+    testing: frameworkName === "next" ? "none" : "vitest",
     router: canClientRoute,
     stateManagement: "none",
     iconLibrary: "none",

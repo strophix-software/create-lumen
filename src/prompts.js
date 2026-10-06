@@ -1,4 +1,4 @@
-import { isCancel, note, select } from "@clack/prompts";
+﻿import { isCancel, note, select } from "@clack/prompts";
 import chalk from "chalk";
 import { configExists, loadConfig, saveConfig } from "@/config-cache.js";
 import {
@@ -124,7 +124,7 @@ export async function runPromptFlow({
       const options = [
         ...stepOptions,
         ...(canGoBack
-          ? [{ label: chalk.dim("ÔåÉ Back"), value: BACK, hint: "Return to previous question" }]
+          ? [{ label: chalk.dim("← Back"), value: BACK, hint: "Return to previous question" }]
           : []),
       ];
 

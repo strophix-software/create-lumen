@@ -326,7 +326,7 @@ export function getDefaultResponses(framework, { projectName = "my-app" } = {}) 
       architecture: "feature-based",
       language: "ts",
       cssFramework: "tailwind",
-      testing: "vitest",
+      testing: "none",
       router: false,
       bundler: "turbopack",
       adapter: "none",

@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { formatConfig, getUserInputs } from "../../src/prompts.js";
 import { computeDeps } from "../../src/dependencies.js";
+import { getDefaultResponses } from "../../src/engine/capabilities.js";
 
 const BASE_ANSWERS = {
   architecture: "feature-based",
@@ -259,4 +260,10 @@ test("prompts: quickSetup sanitizes conflicting arch flag", async () => {
 
   assert.equal(responses.architecture, "feature-based");
   assert.equal(saved.architecture, "feature-based");
+});
+
+test("defaults: Next.js does not default to vitest", () => {
+  assert.equal(getDefaultResponses("next", {}).testing, "none");
+  assert.equal(getDefaultResponses("next:pages-router", {}).testing, "none");
+  assert.equal(getDefaultResponses("react", {}).testing, "vitest");
 });
