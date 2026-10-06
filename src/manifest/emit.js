@@ -64,7 +64,7 @@ export function buildManifest(responses, opts = {}) {
   };
   // Include optional axes only if present in responses (future overlays)
   if (responses.bundler) framework.bundler = responses.bundler;
-  if (responses.adapter) framework.adapter = responses.adapter;
+  if (responses.adapter && responses.adapter !== "none") framework.adapter = responses.adapter;
 
   const styling = {
     engine: responses.cssFramework || "tailwind",

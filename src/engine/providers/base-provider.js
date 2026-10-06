@@ -134,7 +134,7 @@ export class NextAppRouterProvider extends BaseProvider {
       devDeps.typescript = "^5.7.0";
       devDeps["@types/react"] = "^19.0.0";
       devDeps["@types/react-dom"] = "^19.0.0";
-      devDeps["@types/node"] = "^20.0.0";
+      devDeps["@types/node"] = "^22.0.0";
     }
     return {
       dependencies: deps,
@@ -168,7 +168,7 @@ export class NextPagesRouterProvider extends BaseProvider {
       devDeps.typescript = "^5.7.0";
       devDeps["@types/react"] = "^19.0.0";
       devDeps["@types/react-dom"] = "^19.0.0";
-      devDeps["@types/node"] = "^20.0.0";
+      devDeps["@types/node"] = "^22.0.0";
     }
     return {
       dependencies: deps,
