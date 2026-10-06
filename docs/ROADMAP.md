@@ -161,12 +161,12 @@ start with [ADR 0001: scaffolder base strategy](./adr/0001-scaffolder-base-strat
 > `next/image`, adapters.
 
 - [ ] #8 Next.js support (epic)
-- [ ] #18 App Router base scaffold
-- [ ] #19 Pages Router variant
-- [ ] #20 filesystem routing + route handlers
-- [ ] #21 server/client boundaries + `next/font` + `next/image`
-- [ ] #22 adapter configuration
-- [ ] #49 Docs (M3): Next.js architecture (App Router, Pages Router) & deployment adapters guide
+- [x] #18 App Router base scaffold
+- [x] #19 Pages Router variant
+- [x] #20 filesystem routing + route handlers
+- [x] #21 server/client boundaries + `next/font` + `next/image`
+- [x] #22 adapter configuration
+- [x] #49 Docs (M3): Next.js architecture (App Router, Pages Router) & deployment adapters guide
 
 > **Base strategy:** Next.js bases are repository-owned snapshots refreshed
 > from a pinned `create-next-app` (dev-time only) — see

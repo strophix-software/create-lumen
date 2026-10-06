@@ -242,9 +242,77 @@ If you migrate a project using Tailwind CSS:
 
 ---
 
+## 9. Next.js Support in v2.0.0 (Milestone 3)
+
+Starting with `create-lumen` 2.0.0, the scaffolder expands beyond React + Vite to provide first-class support for Next.js 16 and React 19.
+
+### Key Conceptual Differences from v1 (React + Vite)
+
+1. **Dual Routing Paradigms:**
+   - **App Router (`app-router`):** React Server Components (RSC) by default, streaming Suspense, nested `layout.tsx`, and standard Web API Route Handlers (`route.ts`).
+   - **Pages Router (`pages-router`):** Classic page-based routing in `src/pages/`, `getServerSideProps` / `getStaticProps`, and Node.js API Routes (`pages/api/*.ts`).
+
+2. **Intrinsic Routing vs. React Router:**
+   In v1, routing was an optional client library (`react-router`). In Next.js, filesystem routing is built-in (`supportsRouterPrompt: false`). The `paths.pages` property points to either `"src/app"` (App Router) or `"src/pages"` (Pages Router).
+
+3. **Bundler & Deployment Adapters:**
+   v2 introduces two new Next.js-specific manifest options under `framework`:
+   - `framework.bundler`: `"turbopack"` (default, high-performance Rust bundler) or `"webpack"`.
+   - `framework.adapter`: `"node"` (standalone Docker-ready server), `"vercel"` (native cloud serverless/edge), `"cloudflare"` (edge workers), or `"static"` (static HTML export in `out/`).
+
+4. **Component Boundaries:**
+   Projects targeting the App Router run components on the server by default. Interactive stateful components require the `"use client"` directive.
+
+### Next.js Manifest Example (`lumen.config.json`)
+
+```json
+{
+  "$schema": "https://lumen-sh.github.io/create-lumen/schema/lumen.config.v2.json",
+  "manifestVersion": 2,
+  "framework": {
+    "name": "next",
+    "variant": "app-router",
+    "bundler": "turbopack",
+    "adapter": "node"
+  },
+  "styling": {
+    "engine": "tailwind"
+  },
+  "architecture": {
+    "type": "feature-based"
+  },
+  "ui": {
+    "kit": "shadcn"
+  },
+  "docs": {
+    "language": "en"
+  },
+  "paths": {
+    "features": "src/features",
+    "components": "src/shared/components",
+    "services": "src/shared/services",
+    "hooks": "src/shared/hooks",
+    "pages": "src/app",
+    "ui": "src/shared/components/ui"
+  },
+  "tooling": {
+    "language": "ts",
+    "linter": "eslint",
+    "formatter": "prettier"
+  },
+  "reactCompiler": true,
+  "agentDocs": true
+}
+```
+
+---
+
 ## References
 
 - [Manifest v2 Overview](../manifest-v2.md)
 - [Manifest & Template Shared Contract](../contracts/manifest-v2-contract.md)
 - [JSON Schema Specification](../../schema/lumen.config.v2.json)
 - [ADR 0001: Scaffolder Base Strategy](../adr/0001-scaffolder-base-strategy.md)
+- [Next.js App Router Guide](../next-app-router.md)
+- [Next.js Pages Router Guide](../next-pages-router.md)
+- [Next.js Deployment Adapters Guide](../next-adapters.md)
