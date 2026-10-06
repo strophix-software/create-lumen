@@ -12,7 +12,7 @@ import { injectArchitecture, injectConditionals, injectFormatter } from "@/injec
 import { getPkgManager } from "@/utils/pkg-manager.js";
 import { handleDevServer } from "@/utils/dev-server.js";
 import { getUserInputs, onCancel } from "@/prompts.js";
-import { runBaseInstall, runGitInit, runViteCreate } from "@/scaffold.js";
+import { runBaseInstall, runGitInit, runViteCreate, scaffoldBase } from "@/scaffold.js";
 import { installAllDeps } from "@/dependencies.js";
 import { generateReadme } from "@/readme.js";
 import { runProjectFormat } from "@/format.js";
@@ -20,6 +20,8 @@ import { emitManifest } from "@/manifest/emit.js";
 import { emitAgentContext } from "@/agent-context.js";
 
 import { parseCliArgs, loadManifestSource, manifestToResponses, PRESETS } from "@/cli-args.js";
+import { getProvider } from "@/engine/providers/base-provider.js";
+import { normalizeFramework } from "@/engine/capabilities.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -48,6 +50,7 @@ export async function main(options = {}) {
     projectName: nameArg,
     manifest: manifestSource,
     template: templateName,
+    framework: frameworkArg,
     arch: archArg,
   } = options;
   const pkg = getPkgManager();
@@ -94,20 +97,40 @@ export async function main(options = {}) {
       ...preset,
     };
   } else {
-    responses = await getUserInputs(projectName, { quickSetup, initialArch: archArg });
+    responses = await getUserInputs(projectName, { quickSetup, initialArch: archArg, framework: frameworkArg });
   }
 
   const projectPath = path.resolve(CURRENT_DIR, projectName);
 
-  // 4. Scaffold via vite create
+  // 4. Scaffold the base project (provider-owned bases; Vite shells out, Next copies)
+  const fw = normalizeFramework(
+    responses.framework || { name: responses.frameworkName, variant: responses.frameworkVariant }
+  );
   const createSpin = spinner();
-  createSpin.start("Creating your Vite + React project...");
-  try {
-    await runViteCreate(projectPath, projectName, pkg, responses.language);
-    createSpin.stop(chalk.green("Project created successfully!"));
-  } catch (err) {
-    createSpin.stop(chalk.red("Failed to create project."));
-    throw err;
+  if (fw.name === "next") {
+    createSpin.start("Creating your Next.js project...");
+    try {
+      const provider = getProvider(fw.name, fw.variant);
+      const based = await scaffoldBase(projectPath, provider, responses.language, TEMPLATES_DIR);
+      if (!based) {
+        throw new Error(
+          `Next.js base template not found for variant "${fw.variant}" (${responses.language}).`
+        );
+      }
+      createSpin.stop(chalk.green("Project created successfully!"));
+    } catch (err) {
+      createSpin.stop(chalk.red("Failed to create project."));
+      throw err;
+    }
+  } else {
+    createSpin.start("Creating your Vite + React project...");
+    try {
+      await runViteCreate(projectPath, projectName, pkg, responses.language);
+      createSpin.stop(chalk.green("Project created successfully!"));
+    } catch (err) {
+      createSpin.stop(chalk.red("Failed to create project."));
+      throw err;
+    }
   }
 
   // 5. Install base dependencies

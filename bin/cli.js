@@ -25,7 +25,7 @@ console.log(
   chalk.bold.cyan("\n  ✦ LUMEN") +
     chalk.gray(` v${version}`) +
     chalk.gray(
-      "\n  Scaffold a React + Vite project with architecture choice\n"
+      "\n  Scaffold a React, Vite, or Next.js project with architecture choice\n"
     )
 );
 
@@ -36,6 +36,7 @@ main({
   projectName: cliArgs.projectName,
   manifest: cliArgs.manifest,
   template: cliArgs.template,
+  framework: cliArgs.framework,
   arch: cliArgs.arch,
 }).catch((e) => {
   console.error(chalk.red("\nError:"), e.message || e);

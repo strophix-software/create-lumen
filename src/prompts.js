@@ -46,35 +46,42 @@ export function formatConfig(responses) {
       ? "Redux Toolkit"
       : "Zustand";
 
-  const docsLang = responses.docsLanguage === "es" ? "ES" : responses.docsLanguage === "en" ? "EN" : "â€”";
+  const docsLang = responses.docsLanguage === "es" ? "ES" : responses.docsLanguage === "en" ? "EN" : "—";
+  const fwLabel =
+    responses.frameworkName === "next" && responses.frameworkVariant === "pages-router"
+      ? "Next.js (Pages Router)"
+      : responses.frameworkName === "next"
+        ? "Next.js (App Router)"
+        : "React + Vite";
   const lines = [
-    `â€¢ ${chalk.bold("Architecture:")} ${chalk.green(arch)}`,
-    `â€¢ ${chalk.bold("Language:")} ${chalk.green(lang)}`,
-    `â€¢ ${chalk.bold("CSS:")} ${chalk.yellow(css)}`,
-    `â€¢ ${chalk.bold("Testing:")} ${chalk.magenta(testing)}`,
+    `• ${chalk.bold("Framework:")} ${chalk.green(fwLabel)}`,
+    `• ${chalk.bold("Architecture:")} ${chalk.green(arch)}`,
+    `• ${chalk.bold("Language:")} ${chalk.green(lang)}`,
+    `• ${chalk.bold("CSS:")} ${chalk.yellow(css)}`,
+    `• ${chalk.bold("Testing:")} ${chalk.magenta(testing)}`,
   ];
 
   if (responses.router !== undefined) {
-    lines.push(`â€¢ ${chalk.bold("Router:")} ${responses.router ? chalk.green("Yes") : chalk.red("No")}`);
+    lines.push(`• ${chalk.bold("Router:")} ${responses.router ? chalk.green("Yes") : chalk.red("No")}`);
   }
   if (responses.bundler) {
-    lines.push(`â€¢ ${chalk.bold("Bundler:")} ${chalk.cyan(responses.bundler)}`);
+    lines.push(`• ${chalk.bold("Bundler:")} ${chalk.cyan(responses.bundler)}`);
   }
   if (responses.adapter && responses.adapter !== "none") {
-    lines.push(`â€¢ ${chalk.bold("Adapter:")} ${chalk.cyan(responses.adapter)}`);
+    lines.push(`• ${chalk.bold("Adapter:")} ${chalk.cyan(responses.adapter)}`);
   }
   if (responses.reactCompiler !== undefined) {
-    lines.push(`â€¢ ${chalk.bold("React Compiler:")} ${responses.reactCompiler ? chalk.green("Yes") : chalk.red("No")}`);
+    lines.push(`• ${chalk.bold("React Compiler:")} ${responses.reactCompiler ? chalk.green("Yes") : chalk.red("No")}`);
   }
   lines.push(
-    `â€¢ ${chalk.bold("State:")} ${chalk.blue(state)}`,
-    `â€¢ ${chalk.bold("Icons:")} ${chalk.blue(responses.iconLibrary === "none" ? "None" : responses.iconLibrary === "lucide" ? "Lucide" : "Huge")}`,
-    `â€¢ ${chalk.bold("API Client:")} ${responses.apiClient === "axios" ? chalk.green("Axios") : responses.apiClient === "fetch" ? chalk.yellow("Fetch") : chalk.red("None")}`,
-    `â€¢ ${chalk.bold("Linter:")} ${responses.linter === "oxlint" ? chalk.green("Oxlint") : responses.linter === "biome" ? chalk.cyan("Biome") : responses.linter === "eslint" ? chalk.yellow("ESLint") : chalk.red("None")}`,
-    `â€¢ ${chalk.bold("Formatter:")} ${responses.formatter === "oxfmt" ? chalk.green("Oxfmt") : responses.formatter === "prettier" ? chalk.yellow("Prettier") : chalk.red("None")}`,
-    `â€¢ ${chalk.bold("Docs:")} ${chalk.cyan(docsLang)}`,
-    `â€¢ ${chalk.bold("Git:")} ${responses.gitInit ? chalk.green("Yes") : chalk.red("No")}`,
-    `â€¢ ${chalk.bold("README:")} ${responses.readme ? chalk.green("Yes") : chalk.red("No")}`
+    `• ${chalk.bold("State:")} ${chalk.blue(state)}`,
+    `• ${chalk.bold("Icons:")} ${chalk.blue(responses.iconLibrary === "none" ? "None" : responses.iconLibrary === "lucide" ? "Lucide" : "Huge")}`,
+    `• ${chalk.bold("API Client:")} ${responses.apiClient === "axios" ? chalk.green("Axios") : responses.apiClient === "fetch" ? chalk.yellow("Fetch") : chalk.red("None")}`,
+    `• ${chalk.bold("Linter:")} ${responses.linter === "oxlint" ? chalk.green("Oxlint") : responses.linter === "biome" ? chalk.cyan("Biome") : responses.linter === "eslint" ? chalk.yellow("ESLint") : chalk.red("None")}`,
+    `• ${chalk.bold("Formatter:")} ${responses.formatter === "oxfmt" ? chalk.green("Oxfmt") : responses.formatter === "prettier" ? chalk.yellow("Prettier") : chalk.red("None")}`,
+    `• ${chalk.bold("Docs:")} ${chalk.cyan(docsLang)}`,
+    `• ${chalk.bold("Git:")} ${responses.gitInit ? chalk.green("Yes") : chalk.red("No")}`,
+    `• ${chalk.bold("README:")} ${responses.readme ? chalk.green("Yes") : chalk.red("No")}`
   );
   return lines.join("\n");
 }
@@ -179,7 +186,11 @@ export async function getUserInputs(
     loadConfigFn = loadConfig,
   } = {}
 ) {
-  const framework = normalizeFramework(rawFramework);
+  let framework = normalizeFramework(rawFramework);
+  // When no framework flag is given, ask interactively as the first step so all
+  // downstream prompts gate on the user's selection instead of the default.
+  const frameworkLocked =
+    rawFramework !== undefined && rawFramework !== null && String(rawFramework).trim() !== "";
   // Non-interactive quick setup: capability-aware defaults without prompting.
   if (quickSetup) {
     const responses = getDefaultResponses(framework, { projectName });
@@ -236,6 +247,46 @@ export async function getUserInputs(
   }
 
   steps.push(
+    {
+      id: "framework",
+      skip: () => frameworkLocked,
+      onSkip: (ans) => {
+        ans.frameworkName = framework.name;
+        ans.frameworkVariant = framework.variant;
+      },
+      message: "Which framework do you want to scaffold?",
+      getOptions: () => [
+        {
+          label: "React + Vite",
+          value: "react:vite",
+          hint: "Client-side SPA with React Router",
+        },
+        {
+          label: "Next.js (App Router)",
+          value: "next:app-router",
+          hint: "Filesystem routing, server components, route handlers",
+        },
+        {
+          label: "Next.js (Pages Router)",
+          value: "next:pages-router",
+          hint: "Classic pages directory with API routes",
+        },
+      ],
+      defaultInitial: "react:vite",
+      onAnswer: (val, ans, { steps: allSteps }) => {
+        const [name, ...rest] = String(val).split(":");
+        framework = normalizeFramework({ name, variant: rest.join(":") });
+        ans.frameworkName = framework.name;
+        ans.frameworkVariant = framework.variant;
+        const qs = allSteps.find((s) => s.id === "quickSetup");
+        if (qs) {
+          qs.message = isPromptVisible(framework, "router")
+            ? "Quick Setup? (TypeScript + Tailwind + Feature-based + Router + ESLint + Vitest)"
+            : "Quick Setup? (TypeScript + Tailwind + Feature-based + ESLint + Vitest)";
+        }
+        return null;
+      },
+    },
     {
       id: "quickSetup",
       message: isPromptVisible(framework, "router")

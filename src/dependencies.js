@@ -40,6 +40,10 @@ export async function installAllDeps(responses, pkg, cwd) {
 // the conditional wiring stays verifiable without a network install.
 export function computeDeps(responses) {
   const deps = [];
+  const fwName =
+    typeof responses.framework === "string"
+      ? responses.framework
+      : (responses.framework?.name ?? responses.frameworkName ?? "react");
   const cssDevDeps = [];
   const testingDevDeps = [];
   const linterDevDeps = [];
@@ -47,7 +51,7 @@ export function computeDeps(responses) {
 
   // CSS framework
   if (responses.cssFramework === "tailwind") {
-    if (responses.framework === "next") {
+    if (fwName === "next") {
       cssDevDeps.push("tailwindcss", "@tailwindcss/postcss", "postcss");
     } else {
       cssDevDeps.push("tailwindcss", "@tailwindcss/vite");
@@ -103,7 +107,7 @@ export function computeDeps(responses) {
 
   // Linter
   if (responses.linter === "eslint") {
-    if (responses.framework === "next") {
+    if (fwName === "next") {
       linterDevDeps.push("eslint", "eslint-config-next");
     } else {
       linterDevDeps.push("eslint", "@eslint/js", "eslint-plugin-react-hooks", "eslint-plugin-react-refresh", "globals");
@@ -113,6 +117,8 @@ export function computeDeps(responses) {
     }
   } else if (responses.linter === "oxlint") {
     linterDevDeps.push("oxlint");
+  } else if (responses.linter === "biome") {
+    linterDevDeps.push("@biomejs/biome");
   }
 
   // Formatter

@@ -222,18 +222,23 @@ test("prompts: quickSetup choice allows back navigation from final confirm to ed
     saveConfigFn: async () => {},
     selectFn: async ({ message, options }) => {
       promptCount++;
-      // First: choose Quick Setup (true)
+      // First: framework step (new) — stay on React + Vite
       if (promptCount === 1) {
+        assert.ok(message.includes("Which framework"));
+        return "react:vite";
+      }
+      // Second: choose Quick Setup (true)
+      if (promptCount === 2) {
         assert.ok(message.includes("Quick Setup?"));
         return true;
       }
-      // Second: on final confirm, choose BACK!
-      if (promptCount === 2) {
+      // Third: on final confirm, choose BACK!
+      if (promptCount === 3) {
         assert.ok(message.includes("Proceed with project generation?"));
         return BACK;
       }
-      // Third: back at Quick Setup prompt, choose No (false) for custom setup
-      if (promptCount === 3) {
+      // Fourth: back at Quick Setup prompt, choose No (false) for custom setup
+      if (promptCount === 4) {
         assert.ok(message.includes("Quick Setup?"));
         return false;
       }
