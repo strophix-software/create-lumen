@@ -115,3 +115,67 @@ test("capabilities: validateCompatibility catches incompatible configurations", 
   assert.equal(invalid.valid, false);
   assert.equal(invalid.errors.length, 2);
 });
+
+test("capabilities: validateCompatibility rejects bad combos for React and Next", () => {
+  const react = { name: "react", variant: "vite" };
+  const nextApp = { name: "next", variant: "app-router" };
+  const nextPages = { name: "next", variant: "pages-router" };
+
+  // React rejects bundler, adapter, and reactCompiler
+  const reactBad = validateCompatibility(react, {
+    bundler: "turbopack",
+    adapter: "vercel",
+    reactCompiler: true,
+  });
+  assert.equal(reactBad.valid, false);
+  assert.equal(reactBad.errors.length, 3);
+
+  // Next App Router rejects invalid bundler, adapter, and external router
+  const nextBad = validateCompatibility(nextApp, {
+    bundler: "vite",
+    adapter: "aws",
+    router: true,
+    linter: "oxlint",
+    formatter: "oxfmt",
+  });
+  assert.equal(nextBad.valid, false);
+  assert.equal(nextBad.errors.length, 5);
+
+  // Next Pages Router rejects reactCompiler
+  const pagesBadCompiler = validateCompatibility(nextPages, {
+    reactCompiler: true,
+  });
+  assert.equal(pagesBadCompiler.valid, false);
+
+  // Valid combinations
+  const nextAppValid = validateCompatibility(nextApp, {
+    architecture: "feature-based",
+    bundler: "turbopack",
+    adapter: "node",
+    reactCompiler: true,
+    linter: "biome",
+  });
+  assert.equal(nextAppValid.valid, true);
+
+  const nextAppWebpackStatic = validateCompatibility(nextApp, {
+    architecture: "hybrid",
+    bundler: "webpack",
+    adapter: "static",
+    reactCompiler: false,
+    linter: "eslint",
+  });
+  assert.equal(nextAppWebpackStatic.valid, true);
+
+  const nextAppAdapterNone = validateCompatibility(nextApp, {
+    bundler: "turbopack",
+    adapter: "none",
+  });
+  assert.equal(nextAppAdapterNone.valid, true);
+
+  const reactBiomeValid = validateCompatibility(react, {
+    architecture: "feature-based",
+    linter: "biome",
+  });
+  assert.equal(reactBiomeValid.valid, true);
+});
+

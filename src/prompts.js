@@ -63,6 +63,9 @@ export function formatConfig(responses) {
   if (responses.adapter && responses.adapter !== "none") {
     lines.push(`â€¢ ${chalk.bold("Adapter:")} ${chalk.cyan(responses.adapter)}`);
   }
+  if (responses.reactCompiler !== undefined) {
+    lines.push(`â€¢ ${chalk.bold("React Compiler:")} ${responses.reactCompiler ? chalk.green("Yes") : chalk.red("No")}`);
+  }
   lines.push(
     `â€¢ ${chalk.bold("State:")} ${chalk.blue(state)}`,
     `â€¢ ${chalk.bold("Icons:")} ${chalk.blue(responses.iconLibrary === "none" ? "None" : responses.iconLibrary === "lucide" ? "Lucide" : "Huge")}`,
@@ -358,6 +361,19 @@ export async function getUserInputs(
       defaultInitial: "none",
     },
     {
+      id: "reactCompiler",
+      skip: () => !isPromptVisible(framework, "reactCompiler"),
+      onSkip: (ans) => {
+        ans.reactCompiler = false;
+      },
+      message: "Would you like to enable the React Compiler (experimental)?",
+      getOptions: () => [
+        { label: "No (default)", value: false },
+        { label: "Yes", value: true },
+      ],
+      defaultInitial: false,
+    },
+    {
       id: "stateManagement",
       message: "Which state management library do you want to use?",
       getOptions: () => [
@@ -499,6 +515,8 @@ export async function getUserInputs(
     quickSetup: _quickSetup,
     bundler,
     adapter,
+    reactCompiler,
+    agentDocs,
     ...picked
   } = responses;
   const finalResponses = {
@@ -512,6 +530,12 @@ export async function getUserInputs(
   }
   if (adapter !== undefined && adapter !== "none") {
     finalResponses.adapter = adapter;
+  }
+  if (reactCompiler !== undefined) {
+    finalResponses.reactCompiler = reactCompiler;
+  }
+  if (agentDocs !== undefined) {
+    finalResponses.agentDocs = agentDocs;
   }
 
   // No config cache write until final confirm!

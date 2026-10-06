@@ -125,7 +125,7 @@ export class NextAppRouterProvider extends BaseProvider {
   getPackageSet({ options = {} } = {}) {
     const isTs = options.language === "ts";
     const deps = {
-      next: "^15.0.0",
+      next: "^16.0.0",
       react: "^19.0.0",
       "react-dom": "^19.0.0",
     };
@@ -159,7 +159,7 @@ export class NextPagesRouterProvider extends BaseProvider {
   getPackageSet({ options = {} } = {}) {
     const isTs = options.language === "ts";
     const deps = {
-      next: "^15.0.0",
+      next: "^16.0.0",
       react: "^19.0.0",
       "react-dom": "^19.0.0",
     };

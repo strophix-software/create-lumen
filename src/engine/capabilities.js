@@ -153,11 +153,19 @@ export function isOptionCompatible(framework, optionKey, optionValue) {
     case "bundler":
       return desc.allowedBundlers.includes(optionValue);
     case "adapter":
+      if (optionValue === "none") {
+        return desc.allowedAdapters.length > 0;
+      }
       return desc.allowedAdapters.includes(optionValue);
     case "router":
       // If framework has filesystem routing, external router options (true) are incompatible
       if (hasCapability(framework, CAPABILITIES.FILESYSTEM_ROUTING)) {
         return optionValue === false || optionValue === "none";
+      }
+      return true;
+    case "reactCompiler":
+      if (optionValue === true) {
+        return hasCapability(framework, CAPABILITIES.REACT_COMPILER);
       }
       return true;
     default:
@@ -368,6 +376,17 @@ export function sanitizeResponsesForFramework(framework, responses = {}) {
 
   if (!isPromptVisible(fw, "router")) {
     sanitized.router = false;
+  }
+  if (!isPromptVisible(fw, "bundler")) {
+    delete sanitized.bundler;
+  }
+  if (!isPromptVisible(fw, "adapter")) {
+    delete sanitized.adapter;
+  }
+  if (!isPromptVisible(fw, "reactCompiler")) {
+    if (sanitized.reactCompiler !== undefined) {
+      sanitized.reactCompiler = false;
+    }
   }
 
   for (const [key, val] of Object.entries(sanitized)) {
