@@ -149,6 +149,15 @@ export function resolveFragments(responses = {}, templatesDir) {
       try { await fsp.rm(path.join(projectPath, "src", "App.jsx"), { force: true }); } catch {}
       try { await fsp.rm(path.join(projectPath, "src", "index.css"), { force: true }); } catch {}
       try { await fsp.rm(path.join(projectPath, "src", "App.css"), { force: true }); } catch {}
+      if (fw.name === "next") {
+        // Next cleanup: remove Vite defaults without touching app/
+        try { await fsp.rm(path.join(projectPath, "src", "main.tsx"), { force: true }); } catch {}
+        try { await fsp.rm(path.join(projectPath, "src", "main.jsx"), { force: true }); } catch {}
+        try { await fsp.rm(path.join(projectPath, "index.html"), { force: true }); } catch {}
+        try { await fsp.rm(path.join(projectPath, "vite.config.ts"), { force: true }); } catch {}
+        try { await fsp.rm(path.join(projectPath, "vite.config.js"), { force: true }); } catch {}
+        try { await fsp.rm(path.join(projectPath, "public", "vite.svg"), { force: true }); } catch {}
+      }
     },
   });
 
