@@ -58,6 +58,7 @@ export function formatConfig(responses) {
     `• ${chalk.bold("Architecture:")} ${chalk.green(arch)}`,
     `• ${chalk.bold("Language:")} ${chalk.green(lang)}`,
     `• ${chalk.bold("CSS:")} ${chalk.yellow(css)}`,
+    `• ${chalk.bold("UI Kit:")} ${responses.uiKit === "shadcn" ? chalk.cyan("shadcn/ui") : chalk.gray("None")}`,
     `• ${chalk.bold("Testing:")} ${chalk.magenta(testing)}`,
   ];
 
@@ -381,6 +382,24 @@ export async function getUserInputs(
           { label: "None", value: "none" },
         ]),
       defaultInitial: "tailwind",
+    },
+    {
+      id: "uiKit",
+      skip: (ans) => ans.cssFramework !== "tailwind",
+      onSkip: (ans) => {
+        ans.uiKit = "none";
+      },
+      message: "Which UI kit do you want to use?",
+      getOptions: () =>
+        filterCompatibleChoices(framework, "uiKit", [
+          { label: "None", value: "none" },
+          {
+            label: "shadcn/ui",
+            value: "shadcn",
+            hint: "Requires Tailwind CSS — primitives land in paths.ui",
+          },
+        ]),
+      defaultInitial: "none",
     },
     {
       id: "testing",
