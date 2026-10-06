@@ -221,3 +221,70 @@ test("composition: injectComposedFragments achieves byte-identical determinism o
     await fsp.rm(dir2, { recursive: true, force: true });
   }
 });
+
+test("composition: Biome linter fragment emits biome.json and scripts", async () => {
+  const dir = await fsp.mkdtemp(path.join(os.tmpdir(), "lumen-biome-test-"));
+  try {
+    await fsp.writeFile(
+      path.join(dir, "package.json"),
+      JSON.stringify({ name: "app", scripts: {} }, null, 2)
+    );
+    const responses = {
+      frameworkName: "react",
+      frameworkVariant: "vite",
+      architecture: "feature-based",
+      language: "ts",
+      linter: "biome",
+    };
+    const fragments = resolveFragments(responses, TEMPLATES_DIR);
+    const biomeFrag = fragments.find((f) => f.id === "tooling:linter:biome");
+    assert.ok(biomeFrag, "Biome fragment should be present");
+    assert.equal(biomeFrag.scripts.lint, "biome check .");
+
+    await applyFragments(dir, fragments, { templatesDir: TEMPLATES_DIR, responses, language: "ts" });
+    const hasBiomeJson = await fsp.stat(path.join(dir, "biome.json")).catch(() => false);
+    assert.ok(hasBiomeJson, "biome.json should exist in project");
+
+    const pkg = JSON.parse(await fsp.readFile(path.join(dir, "package.json"), "utf8"));
+    assert.equal(pkg.scripts.lint, "biome check .");
+  } finally {
+    await fsp.rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("composition: Next.js adapter overlay and turbopack dev script", async () => {
+  const dir = await fsp.mkdtemp(path.join(os.tmpdir(), "lumen-next-adapter-test-"));
+  try {
+    await fsp.writeFile(
+      path.join(dir, "package.json"),
+      JSON.stringify({ name: "app", scripts: {} }, null, 2)
+    );
+    // Initial next.config.ts
+    await fsp.writeFile(path.join(dir, "next.config.ts"), "const nextConfig = {};\nexport default nextConfig;");
+
+    const responses = {
+      frameworkName: "next",
+      frameworkVariant: "app-router",
+      architecture: "feature-based",
+      language: "ts",
+      bundler: "turbopack",
+      adapter: "node",
+      reactCompiler: true,
+    };
+    const fragments = resolveFragments(responses, TEMPLATES_DIR);
+    const nextConfigFrag = fragments.find((f) => f.id === "tooling:next:config");
+    assert.ok(nextConfigFrag, "Next config fragment should be present");
+    assert.equal(nextConfigFrag.scripts.dev, "next dev --turbopack");
+
+    await applyFragments(dir, fragments, { templatesDir: TEMPLATES_DIR, responses, language: "ts" });
+
+    const pkg = JSON.parse(await fsp.readFile(path.join(dir, "package.json"), "utf8"));
+    assert.equal(pkg.scripts.dev, "next dev --turbopack");
+
+    const nextConfigContent = await fsp.readFile(path.join(dir, "next.config.ts"), "utf8");
+    assert.ok(nextConfigContent.includes("standalone"), "Node adapter sets output standalone");
+    assert.ok(nextConfigContent.includes("reactCompiler"), "React Compiler flag injected");
+  } finally {
+    await fsp.rm(dir, { recursive: true, force: true });
+  }
+});

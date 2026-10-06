@@ -188,3 +188,24 @@ test("cli-args: presets catalog contains valid presets", () => {
   assert.equal(PRESETS["react-none-js"].architecture, "none");
   assert.equal(PRESETS["react-none-js"].language, "js");
 });
+
+test("cli-args: parses bundler, adapter, react-compiler, agent-docs, and linter flags", () => {
+  const parsed1 = parseCliArgs([
+    "--framework", "next:app-router",
+    "--bundler", "turbopack",
+    "--adapter", "node",
+    "--react-compiler",
+    "--agent-docs",
+    "--linter", "biome",
+  ]);
+  assert.equal(parsed1.framework, "next:app-router");
+  assert.equal(parsed1.bundler, "turbopack");
+  assert.equal(parsed1.adapter, "node");
+  assert.equal(parsed1.reactCompiler, true);
+  assert.equal(parsed1.agentDocs, true);
+  assert.equal(parsed1.linter, "biome");
+
+  const parsed2 = parseCliArgs(["-b", "webpack", "--adapter", "static"]);
+  assert.equal(parsed2.bundler, "webpack");
+  assert.equal(parsed2.adapter, "static");
+});

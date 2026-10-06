@@ -459,5 +459,40 @@ test("getUserInputs: quickSetup with Next Pages Router sets router: false", asyn
   assert.equal(responses.frameworkName, "next");
   assert.equal(responses.frameworkVariant, "pages-router");
   assert.equal(responses.router, false);
+  assert.equal(responses.bundler, "turbopack");
+});
+
+test("isPromptVisible: reactCompiler is visible for Next App Router, hidden for React and Pages Router", () => {
+  assert.equal(isPromptVisible("next:app-router", "reactCompiler"), true);
+  assert.equal(isPromptVisible("react:vite", "reactCompiler"), false);
+  assert.equal(isPromptVisible("next:pages-router", "reactCompiler"), false);
+});
+
+test("filterCompatibleChoices: linter includes biome for React and Next", () => {
+  const choices = [
+    { label: "ESLint", value: "eslint" },
+    { label: "Biome", value: "biome" },
+    { label: "Oxlint", value: "oxlint" },
+    { label: "None", value: "none" },
+  ];
+  const reactLinters = filterCompatibleChoices("react:vite", "linter", choices).map((c) => c.value);
+  assert.ok(reactLinters.includes("biome"));
+
+  const nextLinters = filterCompatibleChoices("next:app-router", "linter", choices).map((c) => c.value);
+  assert.ok(nextLinters.includes("biome"));
+  assert.ok(!nextLinters.includes("oxlint"));
+});
+
+test("sanitizeResponsesForFramework: resets bundler, adapter, and reactCompiler for React/Vite", () => {
+  const responses = {
+    projectName: "react-app",
+    bundler: "turbopack",
+    adapter: "vercel",
+    reactCompiler: true,
+  };
+  const sanitized = sanitizeResponsesForFramework("react:vite", responses);
+  assert.equal(sanitized.bundler, undefined);
+  assert.equal(sanitized.adapter, undefined);
+  assert.equal(sanitized.reactCompiler, false);
 });
 

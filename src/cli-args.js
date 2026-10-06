@@ -207,6 +207,13 @@ export function parseCliArgs(argv = process.argv.slice(2)) {
       framework: { type: "string", short: "f" },
       arch: { type: "string", short: "a" },
       architecture: { type: "string" },
+      bundler: { type: "string", short: "b" },
+      adapter: { type: "string" },
+      "react-compiler": { type: "boolean" },
+      reactCompiler: { type: "boolean" },
+      "agent-docs": { type: "boolean" },
+      agentDocs: { type: "boolean" },
+      linter: { type: "string" },
       help: { type: "boolean", short: "h", default: false },
       version: { type: "boolean", short: "v", default: false },
     },
@@ -223,6 +230,12 @@ export function parseCliArgs(argv = process.argv.slice(2)) {
     else if (arch === "component" || arch === "component-based" || arch === "type") arch = "type-based";
   }
 
+  const bundler = values.bundler ? values.bundler.trim().toLowerCase() : null;
+  const adapter = values.adapter ? values.adapter.trim().toLowerCase() : null;
+  const reactCompiler = values["react-compiler"] ?? values.reactCompiler ?? null;
+  const agentDocs = values["agent-docs"] ?? values.agentDocs ?? null;
+  const linter = values.linter ? values.linter.trim().toLowerCase() : null;
+
   return {
     projectName,
     quickSetup: Boolean(values.yes),
@@ -230,6 +243,11 @@ export function parseCliArgs(argv = process.argv.slice(2)) {
     template: values.template || null,
     framework: values.framework ? values.framework.trim() : null,
     arch,
+    bundler,
+    adapter,
+    reactCompiler,
+    agentDocs,
+    linter,
     help: Boolean(values.help),
     version: Boolean(values.version),
     positionals,
@@ -278,6 +296,8 @@ export function manifestToResponses(manifest, projectName) {
   const framework = normalizeFramework({ name: frameworkName, variant: frameworkVariant });
   const canClientRoute = isPromptVisible(framework, "router");
   const supportsBundler = isPromptVisible(framework, "bundler");
+  const supportsAdapter = isPromptVisible(framework, "adapter");
+  const supportsCompiler = isPromptVisible(framework, "reactCompiler");
 
   return {
     projectName,
@@ -287,7 +307,10 @@ export function manifestToResponses(manifest, projectName) {
       supportsBundler && manifest.framework?.bundler
         ? manifest.framework.bundler
         : undefined,
-    adapter: manifest.framework?.adapter,
+    adapter:
+      supportsAdapter && manifest.framework?.adapter
+        ? manifest.framework.adapter
+        : undefined,
     architecture: manifest.architecture?.type || "feature-based",
     language: manifest.tooling?.language || "ts",
     cssFramework: manifest.styling?.engine || "tailwind",
@@ -295,7 +318,7 @@ export function manifestToResponses(manifest, projectName) {
     formatter: manifest.tooling?.formatter || "prettier",
     uiKit: manifest.ui?.kit || "none",
     docsLanguage: manifest.docs?.language || "en",
-    reactCompiler: manifest.reactCompiler,
+    reactCompiler: supportsCompiler ? manifest.reactCompiler : undefined,
     agentDocs: manifest.agentDocs,
     // Sensible defaults for scaffolder conditional passes
     testing: "vitest",

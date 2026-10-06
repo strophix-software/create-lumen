@@ -44,6 +44,7 @@ export const TOOLING_ORDER = [
   "testing",
   "linter",
   "feature-script",
+  "next-config",
   "formatter",
 ];
 
@@ -406,6 +407,23 @@ export function resolveFragments(responses = {}, templatesDir) {
         } catch {}
       },
     });
+  } else if (responses.linter === "biome") {
+    fragments.push({
+      scope: FRAGMENT_SCOPES.TOOLING,
+      category: "linter",
+      id: "tooling:linter:biome",
+      scripts: {
+        lint: "biome check .",
+        "lint:fix": "biome check --write .",
+      },
+      action: async ({ projectPath }) => {
+        const configSrc = path.join(templatesDir, "conditional", "linting", "biome", "biome.json");
+        try {
+          await fsp.access(configSrc);
+          await fsp.copyFile(configSrc, path.join(projectPath, "biome.json"));
+        } catch {}
+      },
+    });
   }
 
   // 5.7 Feature Script (Feature-based only)
@@ -433,6 +451,71 @@ export function resolveFragments(responses = {}, templatesDir) {
           }
           await writeFileRecursive(scriptDest, content);
         } catch {}
+      },
+    });
+  }
+
+  // 5.75 Next.js Configuration & Adapter Overlays
+  if (fw.name === "next") {
+    const nextScripts = {};
+    if (responses.bundler === "turbopack") {
+      nextScripts.dev = "next dev --turbopack";
+    } else if (responses.bundler === "webpack") {
+      nextScripts.dev = "next dev --webpack";
+    }
+
+    fragments.push({
+      scope: FRAGMENT_SCOPES.TOOLING,
+      category: "next-config",
+      id: "tooling:next:config",
+      scripts: nextScripts,
+      action: async ({ projectPath }) => {
+        const configExt = language === "ts" ? "ts" : "mjs";
+
+        // Apply adapter overlay if specified and not "none"
+        if (responses.adapter && responses.adapter !== "none") {
+          const adapterConfigSrc = path.join(
+            templatesDir,
+            "conditional",
+            "next",
+            "config",
+            responses.adapter,
+            `next.config.${configExt}`
+          );
+          try {
+            await fsp.access(adapterConfigSrc);
+            await fsp.copyFile(adapterConfigSrc, path.join(projectPath, `next.config.${configExt}`));
+          } catch {}
+        } else if (responses.bundler === "turbopack" || responses.bundler === "webpack") {
+          // If no adapter specified, but bundler config overlay exists, apply bundler overlay
+          const bundlerConfigSrc = path.join(
+            templatesDir,
+            "conditional",
+            "next",
+            "config",
+            responses.bundler,
+            `next.config.${configExt}`
+          );
+          try {
+            await fsp.access(bundlerConfigSrc);
+            await fsp.copyFile(bundlerConfigSrc, path.join(projectPath, `next.config.${configExt}`));
+          } catch {}
+        }
+
+        // Apply reactCompiler flag to next.config if enabled
+        if (responses.reactCompiler === true) {
+          const targetConfigPath = path.join(projectPath, `next.config.${configExt}`);
+          try {
+            let content = await fsp.readFile(targetConfigPath, "utf8");
+            if (!content.includes("reactCompiler")) {
+              content = content.replace(
+                /const nextConfig(?::\s*NextConfig)?\s*=\s*\{/,
+                (match) => `${match}\n  reactCompiler: true,`
+              );
+              await fsp.writeFile(targetConfigPath, content, "utf8");
+            }
+          } catch {}
+        }
       },
     });
   }
