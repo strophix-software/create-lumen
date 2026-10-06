@@ -1,0 +1,19 @@
+{
+  "cli": "create-next-app",
+  "source": "create-next-app",
+  "version": "16.3.8",
+  "flags": [
+    "--js",
+    "--no-app",
+    "--src-dir",
+    "--import-alias",
+    "@/*",
+    "--no-tailwind",
+    "--no-eslint",
+    "--skip-install",
+    "--disable-git",
+    "--no-agents-md",
+    "--no-react-compiler"
+  ],
+  "date": "2026-10-06"
+}
