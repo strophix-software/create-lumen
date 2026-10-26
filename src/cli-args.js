@@ -282,6 +282,8 @@ export function parseCliArgs(argv = process.argv.slice(2)) {
       adapter: { type: "string" },
       "react-compiler": { type: "boolean" },
       reactCompiler: { type: "boolean" },
+      "route-groups": { type: "boolean" },
+      routeGroups: { type: "boolean" },
       "agent-docs": { type: "boolean" },
       agentDocs: { type: "boolean" },
       linter: { type: "string" },
@@ -304,6 +306,7 @@ export function parseCliArgs(argv = process.argv.slice(2)) {
   const bundler = values.bundler ? values.bundler.trim().toLowerCase() : null;
   const adapter = values.adapter ? values.adapter.trim().toLowerCase() : null;
   const reactCompiler = values["react-compiler"] ?? values.reactCompiler ?? null;
+  const routeGroups = values["route-groups"] ?? values.routeGroups ?? null;
   const agentDocs = values["agent-docs"] ?? values.agentDocs ?? null;
   const linter = values.linter ? values.linter.trim().toLowerCase() : null;
 
@@ -317,6 +320,7 @@ export function parseCliArgs(argv = process.argv.slice(2)) {
     bundler,
     adapter,
     reactCompiler,
+    routeGroups,
     agentDocs,
     linter,
     help: Boolean(values.help),
@@ -369,6 +373,7 @@ export function manifestToResponses(manifest, projectName) {
   const supportsBundler = isPromptVisible(framework, "bundler");
   const supportsAdapter = isPromptVisible(framework, "adapter");
   const supportsCompiler = isPromptVisible(framework, "reactCompiler");
+  const supportsRouteGroups = isPromptVisible(framework, "routeGroups");
 
   return {
     projectName,
@@ -390,6 +395,7 @@ export function manifestToResponses(manifest, projectName) {
     uiKit: manifest.ui?.kit || "none",
     docsLanguage: manifest.docs?.language || "en",
     reactCompiler: supportsCompiler ? manifest.reactCompiler : undefined,
+    routeGroups: supportsRouteGroups ? manifest.routeGroups : undefined,
     agentDocs: manifest.agentDocs,
     // Sensible defaults for scaffolder conditional passes (Next.js ships no
     // verified test-runner overlay yet, so it defaults to none; explicit
@@ -421,6 +427,7 @@ ${chalk.bold("OPTIONS")}
   ${chalk.yellow("-m, --manifest")} <path>  Drive scaffolding from a lumen.config.json or inline JSON
   ${chalk.yellow("-t, --template")} <name>  Scaffold using a preset (${Object.keys(PRESETS).join(", ")})
   ${chalk.yellow("-f, --framework")} <name> Target framework (react, next, react:vite, next:app-router, etc.)
+  ${chalk.yellow("--route-groups")}         Include Next.js route groups preset (public, auth, private, admin)
   ${chalk.yellow("-h, --help")}             Show this help message
   ${chalk.yellow("-v, --version")}          Show version number
 

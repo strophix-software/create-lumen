@@ -335,3 +335,54 @@ test("offline smoke: Next.js Pages Router scaffold with Jest (js) emits jest.con
   await fsp.rm(projectPath, { recursive: true, force: true });
 });
 
+test("offline smoke: Next.js App Router scaffold with routeGroups preset and auth proxy (#64)", async () => {
+  const projectPath = path.join(os.tmpdir(), "lumen-smoke-next-route-groups");
+  await fsp.rm(projectPath, { recursive: true, force: true });
+  await fsp.mkdir(projectPath, { recursive: true });
+
+  const responses = {
+    projectName: "next-route-groups-app",
+    framework: { name: "next", variant: "app-router" },
+    frameworkName: "next",
+    frameworkVariant: "app-router",
+    architecture: "feature-based",
+    language: "ts",
+    cssFramework: "tailwind",
+    testing: "vitest",
+    bundler: "turbopack",
+    adapter: "none",
+    routeGroups: true,
+    linter: "eslint",
+    formatter: "prettier",
+    gitInit: false,
+    readme: true,
+  };
+
+  const provider = getProvider("next", "app-router");
+  await scaffoldBase(projectPath, provider, "ts", TEMPLATES_DIR);
+  await injectConditionals(projectPath, TEMPLATES_DIR, responses, responses.architecture, responses.language);
+  await injectFormatter(projectPath, TEMPLATES_DIR, responses);
+  await emitManifest(projectPath, responses);
+
+  // 1. Colliding root page MUST NOT exist
+  assert.equal(await exists(path.join(projectPath, "src/app/page.tsx")), false, "src/app/page.tsx must not exist");
+  assert.equal(await exists(path.join(projectPath, "src/app/page.jsx")), false, "src/app/page.jsx must not exist");
+
+  // 2. Route groups directories and landing page
+  assert.ok(await exists(path.join(projectPath, "src/app/(public)/layout.tsx")), "(public)/layout.tsx missing");
+  assert.ok(await exists(path.join(projectPath, "src/app/(public)/page.tsx")), "(public)/page.tsx missing");
+  assert.ok(await exists(path.join(projectPath, "src/app/(auth)/layout.tsx")), "(auth)/layout.tsx missing");
+  assert.ok(await exists(path.join(projectPath, "src/app/(private)/layout.tsx")), "(private)/layout.tsx missing");
+  assert.ok(await exists(path.join(projectPath, "src/app/(admin)/layout.tsx")), "(admin)/layout.tsx missing");
+
+  // 3. Auth proxy middleware exists
+  assert.ok(await exists(path.join(projectPath, "src/middleware.ts")), "middleware.ts missing");
+
+  // 4. Manifest emitted has routeGroups: true
+  const manifestRaw = await fsp.readFile(path.join(projectPath, "lumen.config.json"), "utf8");
+  const parsed = parseManifest(JSON.parse(manifestRaw));
+  assert.equal(parsed.routeGroups, true);
+
+  await fsp.rm(projectPath, { recursive: true, force: true });
+});
+

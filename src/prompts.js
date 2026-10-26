@@ -1,4 +1,4 @@
-﻿import { isCancel, note, select } from "@clack/prompts";
+import { isCancel, note, select } from "@clack/prompts";
 import chalk from "chalk";
 import { configExists, loadConfig, saveConfig } from "@/config-cache.js";
 import {
@@ -73,6 +73,9 @@ export function formatConfig(responses) {
   }
   if (responses.reactCompiler !== undefined) {
     lines.push(`• ${chalk.bold("React Compiler:")} ${responses.reactCompiler ? chalk.green("Yes") : chalk.red("No")}`);
+  }
+  if (responses.routeGroups !== undefined) {
+    lines.push(`• ${chalk.bold("Route Groups:")} ${responses.routeGroups ? chalk.green("Yes") : chalk.red("No")}`);
   }
   lines.push(
     `• ${chalk.bold("State:")} ${chalk.blue(state)}`,
@@ -470,6 +473,19 @@ export async function getUserInputs(
       defaultInitial: false,
     },
     {
+      id: "routeGroups",
+      skip: () => !isPromptVisible(framework, "routeGroups"),
+      onSkip: (ans) => {
+        ans.routeGroups = false;
+      },
+      message: "Include route groups preset (public, auth, private, admin)?",
+      getOptions: () => [
+        { label: "No (default)", value: false },
+        { label: "Yes", value: true },
+      ],
+      defaultInitial: false,
+    },
+    {
       id: "stateManagement",
       message: "Which state management library do you want to use?",
       getOptions: () => [
@@ -621,6 +637,7 @@ export async function getUserInputs(
     bundler,
     adapter,
     reactCompiler,
+    routeGroups,
     agentDocs,
     ...picked
   } = responses;
@@ -640,6 +657,9 @@ export async function getUserInputs(
   }
   if (reactCompiler !== undefined) {
     finalResponses.reactCompiler = reactCompiler;
+  }
+  if (routeGroups !== undefined) {
+    finalResponses.routeGroups = routeGroups;
   }
   if (agentDocs !== undefined) {
     finalResponses.agentDocs = agentDocs;

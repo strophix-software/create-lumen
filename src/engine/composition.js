@@ -45,6 +45,7 @@ export const TOOLING_ORDER = [
   "linter",
   "feature-script",
   "next-config",
+  "route-groups",
   "formatter",
 ];
 
@@ -553,6 +554,34 @@ export function resolveFragments(responses = {}, templatesDir) {
             }
           } catch {}
         }
+      },
+    });
+  }
+
+  // 5.76 Next.js Route Groups Preset & Auth Proxy Template (#64)
+  if (responses.routeGroups === true && fw.name === "next" && fw.variant === "app-router") {
+    fragments.push({
+      scope: FRAGMENT_SCOPES.TOOLING,
+      category: "route-groups",
+      id: "tooling:next:route-groups",
+      sourceDir: path.join(templatesDir, "conditional", "next", "route-groups", language),
+      targetDir: "",
+      action: async ({ projectPath }) => {
+        // Remove colliding root page so it does not collide with (public)/page
+        try {
+          await fsp.rm(path.join(projectPath, "src", "app", `page.${ext}`), { force: true });
+        } catch {}
+        const oppositeExt = language === "ts" ? "jsx" : "tsx";
+        try {
+          await fsp.rm(path.join(projectPath, "src", "app", `page.${oppositeExt}`), { force: true });
+        } catch {}
+        // Also remove page.js / page.tsx in case base provider was named page.js
+        try {
+          await fsp.rm(path.join(projectPath, "src", "app", "page.js"), { force: true });
+        } catch {}
+        try {
+          await fsp.rm(path.join(projectPath, "src", "app", "page.tsx"), { force: true });
+        } catch {}
       },
     });
   }

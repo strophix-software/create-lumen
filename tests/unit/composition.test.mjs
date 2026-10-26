@@ -409,3 +409,94 @@ test("composition: React/Vite with Jest still emits babel.config.cjs and standar
     await fsp.rm(dir, { recursive: true, force: true });
   }
 });
+
+test("composition: Next.js App Router with routeGroups emits route group layouts, proxy middleware and cleans up colliding root page (ts)", async () => {
+  const dir = await fsp.mkdtemp(path.join(os.tmpdir(), "lumen-next-routegroups-ts-"));
+  try {
+    await fsp.writeFile(
+      path.join(dir, "package.json"),
+      JSON.stringify({ name: "app", scripts: {} }, null, 2)
+    );
+
+    const responses = {
+      frameworkName: "next",
+      frameworkVariant: "app-router",
+      architecture: "feature-based",
+      language: "ts",
+      routeGroups: true,
+    };
+    const fragments = resolveFragments(responses, TEMPLATES_DIR);
+    await applyFragments(dir, fragments, { templatesDir: TEMPLATES_DIR, responses, language: "ts" });
+
+    // 1. Colliding root page MUST NOT exist
+    assert.equal(
+      await fsp.stat(path.join(dir, "src", "app", "page.tsx")).catch(() => false),
+      false,
+      "src/app/page.tsx must be removed to avoid route collision with (public)/page.tsx"
+    );
+    assert.equal(
+      await fsp.stat(path.join(dir, "src", "app", "page.jsx")).catch(() => false),
+      false
+    );
+
+    // 2. Route groups directories and files must exist
+    assert.ok(await fsp.stat(path.join(dir, "src", "app", "(public)", "layout.tsx")).catch(() => false));
+    assert.ok(await fsp.stat(path.join(dir, "src", "app", "(public)", "page.tsx")).catch(() => false));
+    assert.ok(await fsp.stat(path.join(dir, "src", "app", "(auth)", "layout.tsx")).catch(() => false));
+    assert.ok(await fsp.stat(path.join(dir, "src", "app", "(private)", "layout.tsx")).catch(() => false));
+    assert.ok(await fsp.stat(path.join(dir, "src", "app", "(admin)", "layout.tsx")).catch(() => false));
+
+    // 3. Auth proxy middleware must exist and export config matcher
+    const middlewarePath = path.join(dir, "src", "middleware.ts");
+    assert.ok(await fsp.stat(middlewarePath).catch(() => false));
+    const middlewareContent = await fsp.readFile(middlewarePath, "utf8");
+    assert.ok(middlewareContent.includes("export function middleware"));
+    assert.ok(middlewareContent.includes("auth-token"));
+    assert.ok(middlewareContent.includes("userRole"));
+    assert.ok(middlewareContent.includes("export const config"));
+  } finally {
+    await fsp.rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("composition: Next.js App Router with routeGroups emits route group layouts and middleware (js)", async () => {
+  const dir = await fsp.mkdtemp(path.join(os.tmpdir(), "lumen-next-routegroups-js-"));
+  try {
+    await fsp.writeFile(
+      path.join(dir, "package.json"),
+      JSON.stringify({ name: "app", scripts: {} }, null, 2)
+    );
+
+    const responses = {
+      frameworkName: "next",
+      frameworkVariant: "app-router",
+      architecture: "feature-based",
+      language: "js",
+      routeGroups: true,
+    };
+    const fragments = resolveFragments(responses, TEMPLATES_DIR);
+    await applyFragments(dir, fragments, { templatesDir: TEMPLATES_DIR, responses, language: "js" });
+
+    // 1. Colliding root page MUST NOT exist
+    assert.equal(
+      await fsp.stat(path.join(dir, "src", "app", "page.js")).catch(() => false),
+      false,
+      "src/app/page.js must be removed"
+    );
+
+    // 2. Route groups directories and files must exist
+    assert.ok(await fsp.stat(path.join(dir, "src", "app", "(public)", "layout.jsx")).catch(() => false));
+    assert.ok(await fsp.stat(path.join(dir, "src", "app", "(public)", "page.jsx")).catch(() => false));
+    assert.ok(await fsp.stat(path.join(dir, "src", "app", "(auth)", "layout.jsx")).catch(() => false));
+    assert.ok(await fsp.stat(path.join(dir, "src", "app", "(private)", "layout.jsx")).catch(() => false));
+    assert.ok(await fsp.stat(path.join(dir, "src", "app", "(admin)", "layout.jsx")).catch(() => false));
+
+    // 3. Auth proxy middleware in js
+    const middlewarePath = path.join(dir, "src", "middleware.js");
+    assert.ok(await fsp.stat(middlewarePath).catch(() => false));
+    const middlewareContent = await fsp.readFile(middlewarePath, "utf8");
+    assert.ok(middlewareContent.includes("export function middleware"));
+  } finally {
+    await fsp.rm(dir, { recursive: true, force: true });
+  }
+});
