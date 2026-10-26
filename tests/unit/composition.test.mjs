@@ -737,3 +737,66 @@ test("composition: Next.js with Redux applies without touching main.tsx (#66)", 
     await fsp.rm(dir, { recursive: true, force: true });
   }
 });
+
+test("composition: Next.js App Router does not pollute src/app with React App layer files", async () => {
+  const dir = await fsp.mkdtemp(path.join(os.tmpdir(), "lumen-next-arch-clean-"));
+  try {
+    await fsp.writeFile(
+      path.join(dir, "package.json"),
+      JSON.stringify({ name: "app", scripts: {} }, null, 2)
+    );
+
+    const responses = {
+      frameworkName: "next",
+      frameworkVariant: "app-router",
+      architecture: "feature-based",
+      language: "ts",
+      cssFramework: "tailwind",
+    };
+    const fragments = resolveFragments(responses, TEMPLATES_DIR);
+    await applyFragments(dir, fragments, { templatesDir: TEMPLATES_DIR, responses, language: "ts" });
+
+    // App Router route files must exist
+    assert.ok(await fsp.stat(path.join(dir, "src", "app", "layout.tsx")).catch(() => false));
+    assert.ok(await fsp.stat(path.join(dir, "src", "app", "page.tsx")).catch(() => false));
+
+    // React/Vite-specific application layer files must NOT exist inside src/app
+    assert.equal(await fsp.stat(path.join(dir, "src", "app", "App.tsx")).catch(() => false), false);
+    assert.equal(await fsp.stat(path.join(dir, "src", "app", "hooks")).catch(() => false), false);
+    assert.equal(await fsp.stat(path.join(dir, "src", "app", "contexts")).catch(() => false), false);
+    assert.equal(await fsp.stat(path.join(dir, "src", "app", "providers")).catch(() => false), false);
+
+    // Shared hooks must exist under src/shared/hooks (Single Source of Hooks)
+    assert.ok(await fsp.stat(path.join(dir, "src", "shared", "hooks", "useLocalStorage.ts")).catch(() => false));
+  } finally {
+    await fsp.rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("composition: Next.js Pages Router does not emit src/app directory", async () => {
+  const dir = await fsp.mkdtemp(path.join(os.tmpdir(), "lumen-next-pages-clean-"));
+  try {
+    await fsp.writeFile(
+      path.join(dir, "package.json"),
+      JSON.stringify({ name: "app", scripts: {} }, null, 2)
+    );
+
+    const responses = {
+      frameworkName: "next",
+      frameworkVariant: "pages-router",
+      architecture: "feature-based",
+      language: "ts",
+      cssFramework: "tailwind",
+    };
+    const fragments = resolveFragments(responses, TEMPLATES_DIR);
+    await applyFragments(dir, fragments, { templatesDir: TEMPLATES_DIR, responses, language: "ts" });
+
+    // Pages Router must have src/pages
+    assert.ok(await fsp.stat(path.join(dir, "src", "pages", "index.tsx")).catch(() => false));
+
+    // src/app must not exist in Pages Router
+    assert.equal(await fsp.stat(path.join(dir, "src", "app")).catch(() => false), false);
+  } finally {
+    await fsp.rm(dir, { recursive: true, force: true });
+  }
+});

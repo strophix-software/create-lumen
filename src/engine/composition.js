@@ -178,6 +178,16 @@ export function resolveFragments(responses = {}, templatesDir) {
     targetDir: "src",
     action: async ({ projectPath }) => {
       if (fw.name === "next") {
+        if (fw.variant === "pages-router") {
+          try { await fsp.rm(path.join(projectPath, "src", "app"), { recursive: true, force: true }); } catch {}
+        } else {
+          // Next App Router: preserve file-system routes; purge React/Vite-specific application layer
+          try { await fsp.rm(path.join(projectPath, "src", "app", "App.tsx"), { force: true }); } catch {}
+          try { await fsp.rm(path.join(projectPath, "src", "app", "App.jsx"), { force: true }); } catch {}
+          try { await fsp.rm(path.join(projectPath, "src", "app", "hooks"), { recursive: true, force: true }); } catch {}
+          try { await fsp.rm(path.join(projectPath, "src", "app", "contexts"), { recursive: true, force: true }); } catch {}
+          try { await fsp.rm(path.join(projectPath, "src", "app", "providers"), { recursive: true, force: true }); } catch {}
+        }
         return;
       }
       // Copy architecture main entry
@@ -210,6 +220,16 @@ export function resolveFragments(responses = {}, templatesDir) {
       id: `styling:${cssFramework}:components`,
       sourceDir: componentStylesDir,
       targetDir: "src",
+      action: async ({ projectPath }) => {
+        if (fw.name === "next") {
+          if (fw.variant === "pages-router") {
+            try { await fsp.rm(path.join(projectPath, "src", "app"), { recursive: true, force: true }); } catch {}
+          } else {
+            try { await fsp.rm(path.join(projectPath, "src", "app", "App.tsx"), { force: true }); } catch {}
+            try { await fsp.rm(path.join(projectPath, "src", "app", "App.jsx"), { force: true }); } catch {}
+          }
+        }
+      },
     });
   }
 
