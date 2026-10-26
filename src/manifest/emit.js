@@ -127,6 +127,7 @@ export function buildManifest(responses, opts = {}) {
   if (typeof responses.routeGroups === "boolean") manifest.routeGroups = responses.routeGroups;
   if (typeof responses.reactCompiler === "boolean") manifest.reactCompiler = responses.reactCompiler;
   if (typeof responses.agentDocs === "boolean") manifest.agentDocs = responses.agentDocs;
+  if (typeof responses.docker === "boolean") manifest.docker = responses.docker;
 
   // Enforce stable top-level key order for determinism (like formatter pass)
   const ordered = {};

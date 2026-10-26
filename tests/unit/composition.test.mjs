@@ -494,3 +494,58 @@ test("composition: Next.js with Prisma ORM in JS scaffolds db.js and seed.js", a
     await fsp.rm(dir, { recursive: true, force: true });
   }
 });
+
+test("composition: Next.js with docker emits Dockerfile, .dockerignore, docker-compose.yml and standalone next.config", async () => {
+  const dir = await fsp.mkdtemp(path.join(os.tmpdir(), "lumen-next-docker-"));
+  try {
+    await fsp.writeFile(
+      path.join(dir, "package.json"),
+      JSON.stringify({ name: "app", scripts: {} }, null, 2)
+    );
+
+    const responses = {
+      frameworkName: "next",
+      frameworkVariant: "app-router",
+      bundler: "turbopack",
+      architecture: "feature-based",
+      language: "ts",
+      docker: true,
+    };
+    const fragments = resolveFragments(responses, TEMPLATES_DIR);
+    const dockerFrag = fragments.find((f) => f.id === "tooling:docker");
+    assert.ok(dockerFrag, "tooling:docker fragment should be present");
+
+    await applyFragments(dir, fragments, { templatesDir: TEMPLATES_DIR, responses, language: "ts" });
+
+    // 1. Dockerfile exists and has 4 stages
+    assert.ok(await fsp.stat(path.join(dir, "Dockerfile")).catch(() => false));
+    const dockerfileContent = await fsp.readFile(path.join(dir, "Dockerfile"), "utf8");
+    assert.ok(dockerfileContent.includes("AS base"));
+    assert.ok(dockerfileContent.includes("AS deps"));
+    assert.ok(dockerfileContent.includes("AS builder"));
+    assert.ok(dockerfileContent.includes("AS runner"));
+    assert.ok(dockerfileContent.includes("node:22-alpine") || dockerfileContent.includes("node:20-alpine"));
+    assert.ok(dockerfileContent.includes(".next/standalone"));
+
+    // 2. .dockerignore exists and ignores essential files
+    assert.ok(await fsp.stat(path.join(dir, ".dockerignore")).catch(() => false));
+    const dockerignoreContent = await fsp.readFile(path.join(dir, ".dockerignore"), "utf8");
+    assert.ok(dockerignoreContent.includes("node_modules"));
+    assert.ok(dockerignoreContent.includes(".next"));
+
+    // 3. docker-compose.yml exists and defines app + db
+    assert.ok(await fsp.stat(path.join(dir, "docker-compose.yml")).catch(() => false));
+    const composeContent = await fsp.readFile(path.join(dir, "docker-compose.yml"), "utf8");
+    assert.ok(composeContent.includes("app:"));
+    assert.ok(composeContent.includes("db:"));
+    assert.ok(composeContent.includes("postgres:16-alpine"));
+    assert.ok(composeContent.includes("3000:3000"));
+
+    // 4. next.config.ts has output: "standalone"
+    assert.ok(await fsp.stat(path.join(dir, "next.config.ts")).catch(() => false));
+    const nextCfgContent = await fsp.readFile(path.join(dir, "next.config.ts"), "utf8");
+    assert.ok(nextCfgContent.includes('output: "standalone"'));
+  } finally {
+    await fsp.rm(dir, { recursive: true, force: true });
+  }
+});

@@ -354,7 +354,7 @@ test("offline smoke: Next.js App Router scaffold with Prisma ORM (#62)", async (
     linter: "eslint",
     formatter: "prettier",
     gitInit: false,
-    readme: true,
+    agentDocs: false,
   };
 
   const provider = getProvider("next", "app-router");
@@ -395,6 +395,69 @@ test("offline smoke: Next.js App Router scaffold with Prisma ORM (#62)", async (
   const manifest = parseManifest(JSON.parse(await fsp.readFile(path.join(projectPath, "lumen.config.json"), "utf8")));
   assert.equal(manifest.database?.orm, "prisma");
   assert.equal(manifest.database?.provider, "postgresql");
+
+  await fsp.rm(projectPath, { recursive: true, force: true });
+});
+
+test("offline smoke: Next.js App Router scaffold with docker emits Dockerfile, compose, and standalone output (#63)", async () => {
+  const projectPath = path.join(os.tmpdir(), "lumen-smoke-next-docker");
+  await fsp.rm(projectPath, { recursive: true, force: true });
+  await fsp.mkdir(projectPath, { recursive: true });
+
+  const responses = {
+    projectName: "next-docker-app",
+    framework: { name: "next", variant: "app-router" },
+    frameworkName: "next",
+    frameworkVariant: "app-router",
+    architecture: "feature-based",
+    language: "ts",
+    cssFramework: "tailwind",
+    testing: "none",
+    bundler: "turbopack",
+    adapter: "none",
+    docker: true,
+    linter: "eslint",
+    formatter: "prettier",
+    gitInit: false,
+    agentDocs: false,
+  };
+
+  const provider = getProvider("next", "app-router");
+  await scaffoldBase(projectPath, provider, "ts", TEMPLATES_DIR);
+  await injectConditionals(projectPath, TEMPLATES_DIR, responses, responses.architecture, responses.language);
+  await injectFormatter(projectPath, TEMPLATES_DIR, responses);
+  await emitManifest(projectPath, responses);
+
+  // 1. Dockerfile exists with 4 stages
+  assert.ok(await exists(path.join(projectPath, "Dockerfile")), "Dockerfile missing");
+  const dockerfile = await fsp.readFile(path.join(projectPath, "Dockerfile"), "utf8");
+  assert.ok(dockerfile.includes("FROM node:22-alpine AS base") || dockerfile.includes("FROM node:20-alpine AS base"));
+  assert.ok(dockerfile.includes("AS deps"));
+  assert.ok(dockerfile.includes("AS builder"));
+  assert.ok(dockerfile.includes("AS runner"));
+  assert.ok(dockerfile.includes(".next/standalone"));
+
+  // 2. .dockerignore exists
+  assert.ok(await exists(path.join(projectPath, ".dockerignore")), ".dockerignore missing");
+  const dockerignore = await fsp.readFile(path.join(projectPath, ".dockerignore"), "utf8");
+  assert.ok(dockerignore.includes("node_modules"));
+  assert.ok(dockerignore.includes(".next"));
+
+  // 3. docker-compose.yml exists with app and postgres
+  assert.ok(await exists(path.join(projectPath, "docker-compose.yml")), "docker-compose.yml missing");
+  const compose = await fsp.readFile(path.join(projectPath, "docker-compose.yml"), "utf8");
+  assert.ok(compose.includes("app:"));
+  assert.ok(compose.includes("db:"));
+  assert.ok(compose.includes("postgres:16-alpine"));
+
+  // 4. next.config.ts has output: "standalone"
+  assert.ok(await exists(path.join(projectPath, "next.config.ts")), "next.config.ts missing");
+  const nextCfg = await fsp.readFile(path.join(projectPath, "next.config.ts"), "utf8");
+  assert.ok(nextCfg.includes('output: "standalone"'));
+
+  // 5. manifest v2 contains docker: true
+  const manifestRaw = JSON.parse(await fsp.readFile(path.join(projectPath, "lumen.config.json"), "utf8"));
+  assert.equal(manifestRaw.docker, true);
 
   await fsp.rm(projectPath, { recursive: true, force: true });
 });

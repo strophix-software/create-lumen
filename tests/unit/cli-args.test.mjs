@@ -290,3 +290,42 @@ test("cli-args: manifestToResponses maps database.orm to responses.database", ()
   );
   assert.equal(reactWithPrisma.database, "none");
 });
+
+test("cli-args: parses --docker flag and maps manifest.docker", () => {
+  const parsed = parseCliArgs(["--docker", "my-app"]);
+  assert.equal(parsed.docker, true);
+  assert.equal(parsed.projectName, "my-app");
+
+  const unflagged = parseCliArgs(["my-app"]);
+  assert.equal(unflagged.docker, false);
+
+  const baseManifest = {
+    manifestVersion: 2,
+    styling: { engine: "tailwind" },
+    architecture: { type: "feature-based" },
+    ui: { kit: "none" },
+    docs: { language: "en" },
+    paths: {
+      features: "src/features",
+      components: "src/components",
+      services: "src/services",
+      hooks: "src/hooks",
+      pages: "src/pages",
+      ui: "src/components/ui",
+    },
+    tooling: { language: "ts", linter: "eslint", formatter: "prettier" },
+    docker: true,
+  };
+
+  const nextResponses = manifestToResponses(
+    { ...baseManifest, framework: { name: "next", variant: "app-router" } },
+    "next-app"
+  );
+  assert.equal(nextResponses.docker, true);
+
+  const reactResponses = manifestToResponses(
+    { ...baseManifest, framework: { name: "react", variant: "vite" } },
+    "react-app"
+  );
+  assert.equal(reactResponses.docker, false);
+});
