@@ -7,7 +7,6 @@ test("prompts: formatConfig displays human-friendly architecture names", () => {
   assert.match(formatConfig({ architecture: "feature-based", language: "ts" }), /Feature-based/);
   assert.match(formatConfig({ architecture: "type-based", language: "ts" }), /Type-based/);
   assert.match(formatConfig({ architecture: "none", language: "ts" }), /None/);
-  assert.match(formatConfig({ architecture: "hybrid", language: "ts" }), /Hybrid/);
 });
 
 test("prompts: runPromptFlow linear progression collects all answers", async () => {
@@ -289,7 +288,7 @@ test("prompts: architecture choices scoped per framework (React vs Next)", async
       if (message.includes("Quick Setup?")) return false;
       if (message.includes("architecture")) {
         nextArchOptions = options.map((o) => o.value).filter((v) => v !== BACK);
-        return "hybrid";
+        return "feature-based";
       }
       if (message.includes("Proceed with project generation?")) return true;
       return options[0].value;
@@ -297,6 +296,6 @@ test("prompts: architecture choices scoped per framework (React vs Next)", async
     noteFn: () => {},
   });
 
-  assert.deepEqual(nextArchOptions, ["feature-based", "hybrid", "none"]);
+  assert.deepEqual(nextArchOptions, ["feature-based", "none"]);
 });
 

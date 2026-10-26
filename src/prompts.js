@@ -24,8 +24,6 @@ export function formatConfig(responses) {
       ? "Feature-based"
       : responses.architecture === "type-based" || responses.architecture === "component-based"
       ? "Type-based"
-      : responses.architecture === "hybrid"
-      ? "Hybrid (shared + features)"
       : responses.architecture === "none"
       ? "None (flat src)"
       : responses.architecture;
@@ -360,11 +358,6 @@ export async function getUserInputs(
             label: "Type-based",
             value: "type-based",
             hint: "Small apps / component libraries — code grouped by UI type",
-          },
-          {
-            label: "Hybrid",
-            value: "hybrid",
-            hint: "Next.js: features + shared code",
           },
           {
             label: "None",

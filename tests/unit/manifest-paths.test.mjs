@@ -50,18 +50,6 @@ test("resolvePaths: feature-based next pages-router -> pages at root", () => {
   assert.equal(p.pages, "pages");
 });
 
-test("resolvePaths: hybrid next app-router", () => {
-  const p = resolvePaths({ architecture: "hybrid", framework: { name: "next", variant: "app-router" } });
-  assert.deepEqual(p, {
-    features: "src/features",
-    components: "src/shared/components",
-    services: "src/shared/services",
-    hooks: "src/shared/hooks",
-    pages: "app",
-    ui: "src/shared/components/ui",
-  });
-});
-
 test("resolvePaths: none react", () => {
   const p = resolvePaths({ architecture: "none", framework: { name: "react", variant: "vite" } });
   assert.deepEqual(p, {
@@ -81,7 +69,7 @@ test("resolvePaths: none next pages-router -> pages root", () => {
 });
 
 test("resolvePaths: lumen-cli can resolve every target from manifest alone (keys present)", () => {
-  for (const arch of ["feature-based", "type-based", "component-based", "hybrid", "none"]) {
+  for (const arch of ["feature-based", "type-based", "component-based", "none"]) {
     for (const fw of [{ name: "react", variant: "vite" }, { name: "next", variant: "app-router" }, { name: "next", variant: "pages-router" }]) {
       const p = resolvePaths({ architecture: arch, framework: fw });
       for (const k of ["features", "components", "services", "hooks", "pages", "ui"]) {

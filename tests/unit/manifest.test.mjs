@@ -30,7 +30,7 @@ test("manifest v2 contract tests: invalid fixtures fail with expected errors (#2
   assert.ok(invalidFixtures.length >= 10, `Expected at least 10 invalid fixtures, found ${invalidFixtures.length}`);
 
   const expectations = {
-    "react-hybrid": /architecture\.type.*hybrid.*not valid for framework "react"/i,
+    "react-hybrid": /Invalid enum value.*hybrid|architecture\.type.*hybrid.*not valid|Manifest validation failed/i,
     "next-type-based": /architecture\.type.*type-based.*not valid for framework "next"/i,
     "shadcn-without-tailwind": /ui\.kit "shadcn" requires styling\.engine "tailwind"/i,
     "react-variant-mismatch": /framework\.variant must be "vite" when framework\.name is "react"/i,

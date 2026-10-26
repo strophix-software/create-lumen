@@ -458,7 +458,7 @@ ${chalk.bold("USAGE")}
 
 ${chalk.bold("OPTIONS")}
   ${chalk.yellow("-y, --yes")}              Quick setup with recommended defaults (TS + Tailwind + Router + ESLint + Prettier)
-  ${chalk.yellow("-a, --arch")} <name>      Architecture preset (feature-based, type-based, none, hybrid)
+  ${chalk.yellow("-a, --arch")} <name>      Architecture preset (feature-based, type-based, none)
   ${chalk.yellow("-m, --manifest")} <path>  Drive scaffolding from a lumen.config.json or inline JSON
   ${chalk.yellow("-t, --template")} <name>  Scaffold using a preset (${Object.keys(PRESETS).join(", ")})
   ${chalk.yellow("-f, --framework")} <name> Target framework (react, next, react:vite, next:app-router, etc.)

@@ -79,7 +79,6 @@
           "enum": [
             "feature-based",
             "type-based",
-            "hybrid",
             "none"
           ]
         },
@@ -88,7 +87,6 @@
           "enum": [
             "feature-based",
             "type-based",
-            "hybrid",
             "none"
           ]
         },

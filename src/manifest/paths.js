@@ -69,30 +69,6 @@ export function resolvePaths({ architecture, framework = {} } = {}) {
     };
   }
 
-  // -- hybrid (Next.js: feature + shared). For React, fallback to feature-based
-  if (arch === "hybrid") {
-    if (isNext) {
-      const nextRoot = nextPagesForVariant(variant);
-      return {
-        features: "src/features",
-        components: "src/shared/components",
-        services: "src/shared/services",
-        hooks: "src/shared/hooks",
-        pages: nextRoot,
-        ui: "src/shared/components/ui",
-      };
-    }
-    // React hybrid = hybrid not valid, but map to feature-based for determinism
-    return {
-      features: "src/features",
-      components: "src/shared/components",
-      services: "src/shared/services",
-      hooks: "src/shared/hooks",
-      pages: "src/app/router",
-      ui: "src/shared/components/ui",
-    };
-  }
-
   // -- none (minimal flat src/ — no imposed convention)
   if (arch === "none") {
     if (isNext) {

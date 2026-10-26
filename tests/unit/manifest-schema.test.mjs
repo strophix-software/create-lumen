@@ -33,20 +33,20 @@ test("parseManifest defaults $schema when omitted", () => {
   assert.equal(out.$schema, SCHEMA_URL);
 });
 
-test("parseManifest accepts next/app-router with hybrid + bundler + adapter + flags", () => {
+test("parseManifest accepts next/app-router with feature-based + bundler + adapter + flags", () => {
   const m = {
     ...baseValid,
     framework: { name: "next", variant: "app-router", bundler: "turbopack", adapter: "vercel" },
-    architecture: { type: "hybrid" },
+    architecture: { type: "feature-based" },
     reactCompiler: true,
     agentDocs: true,
   };
   assert.doesNotThrow(() => parseManifest(m));
 });
 
-test("parseManifest rejects react + hybrid (scoped architecture #34)", () => {
+test("parseManifest rejects hybrid architecture", () => {
   const m = { ...baseValid, architecture: { type: "hybrid" } };
-  assert.throws(() => parseManifest(m), /architecture\.type.*hybrid.*not valid for framework "react"/i);
+  assert.throws(() => parseManifest(m), /Invalid enum value|Manifest validation failed/i);
 });
 
 test("parseManifest rejects next + type-based", () => {

@@ -166,7 +166,7 @@ export function resolveFragments(responses = {}, templatesDir) {
   });
 
   // =========================================================================
-  // Layer 3: Architecture (feature-based / type-based / hybrid / none)
+  // Layer 3: Architecture (feature-based / type-based / none)
   // =========================================================================
   const archSrcDir = path.join(templatesDir, "architectures", architecture, "src");
   const archMainSrc = path.join(templatesDir, "architectures", architecture, `main.${ext}`);
