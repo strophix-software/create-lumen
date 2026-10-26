@@ -247,6 +247,35 @@
       ],
       "additionalProperties": false
     },
+    "database": {
+      "type": "object",
+      "properties": {
+        "orm": {
+          "type": "string",
+          "enum": [
+            "prisma",
+            "none"
+          ]
+        },
+        "provider": {
+          "default": "postgresql",
+          "type": "string",
+          "enum": [
+            "postgresql"
+          ]
+        }
+      },
+      "required": [
+        "orm"
+      ],
+      "additionalProperties": false
+    },
+    "docker": {
+      "type": "boolean"
+    },
+    "routeGroups": {
+      "type": "boolean"
+    },
     "reactCompiler": {
       "type": "boolean"
     },

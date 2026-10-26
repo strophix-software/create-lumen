@@ -1,4 +1,4 @@
-﻿import { isCancel, note, select } from "@clack/prompts";
+import { isCancel, note, select } from "@clack/prompts";
 import chalk from "chalk";
 import { configExists, loadConfig, saveConfig } from "@/config-cache.js";
 import {
@@ -71,8 +71,17 @@ export function formatConfig(responses) {
   if (responses.adapter && responses.adapter !== "none") {
     lines.push(`• ${chalk.bold("Adapter:")} ${chalk.cyan(responses.adapter)}`);
   }
+  if (responses.database && responses.database !== "none") {
+    lines.push(`• ${chalk.bold("Database:")} ${chalk.cyan(responses.database === "prisma" ? "Prisma ORM" : responses.database)}`);
+  }
   if (responses.reactCompiler !== undefined) {
     lines.push(`• ${chalk.bold("React Compiler:")} ${responses.reactCompiler ? chalk.green("Yes") : chalk.red("No")}`);
+  }
+  if (responses.routeGroups !== undefined) {
+    lines.push(`• ${chalk.bold("Route Groups:")} ${responses.routeGroups ? chalk.green("Yes") : chalk.red("No")}`);
+  }
+  if (responses.docker !== undefined) {
+    lines.push(`• ${chalk.bold("Docker:")} ${responses.docker ? chalk.green("Yes") : chalk.red("No")}`);
   }
   lines.push(
     `• ${chalk.bold("State:")} ${chalk.blue(state)}`,
@@ -410,7 +419,15 @@ export async function getUserInputs(
         { label: "Jest", value: "jest" },
         { label: "None", value: "none" },
       ],
-      defaultInitial: "vitest",
+      defaultInitial: (ans) => {
+        const fw = normalizeFramework(
+          ans.framework || {
+            name: ans.frameworkName,
+            variant: ans.frameworkVariant,
+          }
+        );
+        return fw.name === "next" ? "none" : "vitest";
+      },
     },
     {
       id: "router",
@@ -457,6 +474,24 @@ export async function getUserInputs(
       defaultInitial: "none",
     },
     {
+      id: "database",
+      skip: () => !isPromptVisible(framework, "database"),
+      onSkip: (ans) => {
+        ans.database = "none";
+      },
+      message: "Which database ORM do you want to use?",
+      getOptions: () =>
+        filterCompatibleChoices(framework, "database", [
+          {
+            label: "Prisma ORM",
+            value: "prisma",
+            hint: "PostgreSQL schema, client singleton, seed script",
+          },
+          { label: "None", value: "none" },
+        ]),
+      defaultInitial: "none",
+    },
+    {
       id: "reactCompiler",
       skip: () => !isPromptVisible(framework, "reactCompiler"),
       onSkip: (ans) => {
@@ -466,6 +501,32 @@ export async function getUserInputs(
       getOptions: () => [
         { label: "No (default)", value: false },
         { label: "Yes", value: true },
+      ],
+      defaultInitial: false,
+    },
+    {
+      id: "routeGroups",
+      skip: () => !isPromptVisible(framework, "routeGroups"),
+      onSkip: (ans) => {
+        ans.routeGroups = false;
+      },
+      message: "Include route groups preset (public, auth, private, admin)?",
+      getOptions: () => [
+        { label: "No (default)", value: false },
+        { label: "Yes", value: true },
+      ],
+      defaultInitial: false,
+    },
+    {
+      id: "docker",
+      skip: () => !isPromptVisible(framework, "docker"),
+      onSkip: (ans) => {
+        ans.docker = false;
+      },
+      message: "Include Docker setup?",
+      getOptions: () => [
+        { label: "No (default)", value: false },
+        { label: "Yes", value: true, hint: "Multi-stage Dockerfile and docker-compose" },
       ],
       defaultInitial: false,
     },
@@ -560,10 +621,10 @@ export async function getUserInputs(
     },
     {
       id: "agentDocs",
-      message: "Generate .lumen/ agent context for AI assistants?",
+      message: "Generate AGENTS.md for AI assistants?",
       getOptions: () => [
         { label: "No (default)", value: false },
-        { label: "Yes", value: true, hint: "Emits .lumen/ with project, architecture and conventions" },
+        { label: "Yes", value: true, hint: "Emits AGENTS.md referencing lumen.config.json (SSOT)" },
       ],
       defaultInitial: false,
     },
@@ -620,8 +681,11 @@ export async function getUserInputs(
     quickSetup: _quickSetup,
     bundler,
     adapter,
+    database,
     reactCompiler,
+    routeGroups,
     agentDocs,
+    docker,
     ...picked
   } = responses;
   // Final safety net: BACK-navigation can reselect the framework after other
@@ -638,11 +702,20 @@ export async function getUserInputs(
   if (adapter !== undefined && adapter !== "none") {
     finalResponses.adapter = adapter;
   }
+  if (database !== undefined && database !== "none") {
+    finalResponses.database = database;
+  }
   if (reactCompiler !== undefined) {
     finalResponses.reactCompiler = reactCompiler;
   }
+  if (routeGroups !== undefined) {
+    finalResponses.routeGroups = routeGroups;
+  }
   if (agentDocs !== undefined) {
     finalResponses.agentDocs = agentDocs;
+  }
+  if (docker !== undefined) {
+    finalResponses.docker = docker;
   }
 
   // No config cache write until final confirm!

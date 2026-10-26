@@ -243,3 +243,123 @@ test("cli-args: parses bundler, adapter, react-compiler, agent-docs, and linter 
   assert.equal(parsed2.bundler, "webpack");
   assert.equal(parsed2.adapter, "static");
 });
+
+test("cli-args: parses --database and --db flags", () => {
+  const p1 = parseCliArgs(["--database", "prisma"]);
+  assert.equal(p1.database, "prisma");
+
+  const p2 = parseCliArgs(["--db", "none"]);
+  assert.equal(p2.database, "none");
+});
+
+test("cli-args: manifestToResponses maps database.orm to responses.database", () => {
+  const base = {
+    manifestVersion: 2,
+    styling: { engine: "tailwind" },
+    architecture: { type: "feature-based" },
+    ui: { kit: "none" },
+    docs: { language: "en" },
+    paths: {
+      features: "src/features",
+      components: "src/components",
+      services: "src/services",
+      hooks: "src/hooks",
+      pages: "src/pages",
+      ui: "src/components/ui",
+    },
+    tooling: { language: "ts", linter: "eslint", formatter: "prettier" },
+  };
+
+  const nextWithPrisma = manifestToResponses(
+    {
+      ...base,
+      framework: { name: "next", variant: "app-router" },
+      database: { orm: "prisma", provider: "postgresql" },
+    },
+    "next-prisma-app"
+  );
+  assert.equal(nextWithPrisma.database, "prisma");
+
+  const reactWithPrisma = manifestToResponses(
+    {
+      ...base,
+      framework: { name: "react", variant: "vite" },
+      database: { orm: "prisma", provider: "postgresql" },
+    },
+    "react-app"
+  );
+  assert.equal(reactWithPrisma.database, "none");
+});
+
+test("cli-args: parses --docker flag and maps manifest.docker", () => {
+  const parsed = parseCliArgs(["--docker", "my-app"]);
+  assert.equal(parsed.docker, true);
+  assert.equal(parsed.projectName, "my-app");
+
+  const unflagged = parseCliArgs(["my-app"]);
+  assert.equal(unflagged.docker, false);
+
+  const baseManifest = {
+    manifestVersion: 2,
+    styling: { engine: "tailwind" },
+    architecture: { type: "feature-based" },
+    ui: { kit: "none" },
+    docs: { language: "en" },
+    paths: {
+      features: "src/features",
+      components: "src/components",
+      services: "src/services",
+      hooks: "src/hooks",
+      pages: "src/pages",
+      ui: "src/components/ui",
+    },
+    tooling: { language: "ts", linter: "eslint", formatter: "prettier" },
+    docker: true,
+  };
+
+  const nextResponses = manifestToResponses(
+    { ...baseManifest, framework: { name: "next", variant: "app-router" } },
+    "next-app"
+  );
+  assert.equal(nextResponses.docker, true);
+
+  const reactResponses = manifestToResponses(
+    { ...baseManifest, framework: { name: "react", variant: "vite" } },
+    "react-app"
+  );
+  assert.equal(reactResponses.docker, false);
+});
+
+test("cli-args: parses --route-groups boolean flag and maps manifest.routeGroups", () => {
+  const parsed = parseCliArgs(["--route-groups"]);
+  assert.equal(parsed.routeGroups, true);
+
+  const baseManifest = {
+    manifestVersion: 2,
+    framework: { name: "next", variant: "app-router" },
+    styling: { engine: "tailwind" },
+    architecture: { type: "feature-based" },
+    ui: { kit: "none" },
+    docs: { language: "en" },
+    paths: {
+      features: "src/features",
+      components: "src/components",
+      services: "src/services",
+      hooks: "src/hooks",
+      pages: "src/pages",
+      ui: "src/components/ui",
+    },
+    tooling: { language: "ts", linter: "eslint", formatter: "prettier" },
+    routeGroups: true,
+  };
+
+  const responses = manifestToResponses(baseManifest, "route-groups-app");
+  assert.equal(responses.routeGroups, true);
+
+  // When framework is React/Vite, routeGroups must not be forwarded
+  const reactResponses = manifestToResponses(
+    { ...baseManifest, framework: { name: "react", variant: "vite" } },
+    "react-app"
+  );
+  assert.equal(reactResponses.routeGroups, undefined);
+});

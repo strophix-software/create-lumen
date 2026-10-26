@@ -1,5 +1,6 @@
 import path from "path";
 import { promises as fsp } from "fs";
+import { normalizeFramework } from "./engine/capabilities.js";
 
 const ENV_GITIGNORE = `
 # Environment variables
@@ -8,12 +9,29 @@ const ENV_GITIGNORE = `
 !.env.example
 `;
 
-export async function copyEnvExample(projectPath, templatesDir) {
-  const src = path.join(templatesDir, ".env.example");
-  try {
-    await fsp.access(src);
-    await fsp.copyFile(src, path.join(projectPath, ".env.example"));
-  } catch {}
+const NEXT_ENV_EXAMPLE = `# Copy this file to \`.env.local\` (or \`.env\`) and fill in your values.
+# See https://nextjs.org/docs/app/building-your-application/configuring/environment-variables for details.
+
+NEXT_PUBLIC_API_URL=https://api.example.com
+`;
+
+export async function copyEnvExample(projectPath, templatesDir, responses = {}) {
+  const fw = normalizeFramework(
+    responses.framework || {
+      name: responses.frameworkName,
+      variant: responses.frameworkVariant,
+    }
+  );
+
+  if (fw.name === "next") {
+    await fsp.writeFile(path.join(projectPath, ".env.example"), NEXT_ENV_EXAMPLE, "utf8");
+  } else {
+    const src = path.join(templatesDir, ".env.example");
+    try {
+      await fsp.access(src);
+      await fsp.copyFile(src, path.join(projectPath, ".env.example"));
+    } catch {}
+  }
 
   // Ensure the project gitignore excludes env files but keeps .env.example.
   const gitignore = path.join(projectPath, ".gitignore");

@@ -1,4 +1,5 @@
 import { execa } from "execa";
+import { normalizeFramework } from "./engine/capabilities.js";
 
 export async function installDeps(pkgManager, dev, packages, cwd) {
   let cmd, args;
@@ -40,11 +41,15 @@ export async function installAllDeps(responses, pkg, cwd) {
 // the conditional wiring stays verifiable without a network install.
 export function computeDeps(responses) {
   const deps = [];
-  const fwName =
-    typeof responses.framework === "string"
-      ? responses.framework
-      : (responses.framework?.name ?? responses.frameworkName ?? "react");
+  const fw = normalizeFramework(
+    responses.framework || {
+      name: responses.frameworkName,
+      variant: responses.frameworkVariant,
+    }
+  );
+  const fwName = fw.name;
   const cssDevDeps = [];
+  const databaseDevDeps = [];
   const testingDevDeps = [];
   const linterDevDeps = [];
   const formatterDevDeps = [];
@@ -83,6 +88,15 @@ export function computeDeps(responses) {
     deps.push("axios");
   }
 
+  // Database
+  if (responses.database === "prisma") {
+    deps.push("@prisma/client");
+    databaseDevDeps.push("prisma");
+    if (responses.language === "ts") {
+      databaseDevDeps.push("tsx");
+    }
+  }
+
   // Testing
   if (responses.testing === "vitest") {
     testingDevDeps.push(
@@ -92,17 +106,29 @@ export function computeDeps(responses) {
       "jsdom"
     );
   } else if (responses.testing === "jest") {
-    testingDevDeps.push(
-      "jest",
-      "jest-environment-jsdom",
-      "@testing-library/react",
-      "@testing-library/jest-dom",
-      "jsdom",
-      "babel-jest",
-      "@babel/preset-env",
-      "@babel/preset-react",
-      "@babel/preset-typescript"
-    );
+    if (fwName === "next") {
+      testingDevDeps.push(
+        "jest",
+        "jest-environment-jsdom",
+        "@testing-library/react",
+        "@testing-library/jest-dom"
+      );
+      if (responses.language === "ts") {
+        testingDevDeps.push("@types/jest");
+      }
+    } else {
+      testingDevDeps.push(
+        "jest",
+        "jest-environment-jsdom",
+        "@testing-library/react",
+        "@testing-library/jest-dom",
+        "jsdom",
+        "babel-jest",
+        "@babel/preset-env",
+        "@babel/preset-react",
+        "@babel/preset-typescript"
+      );
+    }
   }
 
   // Linter
@@ -136,6 +162,7 @@ export function computeDeps(responses) {
 
   const devDepBatches = [
     cssDevDeps,
+    databaseDevDeps,
     testingDevDeps,
     linterDevDeps,
     formatterDevDeps,

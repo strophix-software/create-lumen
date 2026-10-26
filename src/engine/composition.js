@@ -41,10 +41,13 @@ export const TOOLING_ORDER = [
   "router",
   "icons",
   "api",
+  "database",
   "testing",
   "linter",
   "feature-script",
   "next-config",
+  "route-groups",
+  "docker",
   "formatter",
 ];
 
@@ -174,6 +177,19 @@ export function resolveFragments(responses = {}, templatesDir) {
     sourceDir: archSrcDir,
     targetDir: "src",
     action: async ({ projectPath }) => {
+      if (fw.name === "next") {
+        if (fw.variant === "pages-router") {
+          try { await fsp.rm(path.join(projectPath, "src", "app"), { recursive: true, force: true }); } catch {}
+        } else {
+          // Next App Router: preserve file-system routes; purge React/Vite-specific application layer
+          try { await fsp.rm(path.join(projectPath, "src", "app", "App.tsx"), { force: true }); } catch {}
+          try { await fsp.rm(path.join(projectPath, "src", "app", "App.jsx"), { force: true }); } catch {}
+          try { await fsp.rm(path.join(projectPath, "src", "app", "hooks"), { recursive: true, force: true }); } catch {}
+          try { await fsp.rm(path.join(projectPath, "src", "app", "contexts"), { recursive: true, force: true }); } catch {}
+          try { await fsp.rm(path.join(projectPath, "src", "app", "providers"), { recursive: true, force: true }); } catch {}
+        }
+        return;
+      }
       // Copy architecture main entry
       try {
         await fsp.access(archMainSrc);
@@ -204,6 +220,16 @@ export function resolveFragments(responses = {}, templatesDir) {
       id: `styling:${cssFramework}:components`,
       sourceDir: componentStylesDir,
       targetDir: "src",
+      action: async ({ projectPath }) => {
+        if (fw.name === "next") {
+          if (fw.variant === "pages-router") {
+            try { await fsp.rm(path.join(projectPath, "src", "app"), { recursive: true, force: true }); } catch {}
+          } else {
+            try { await fsp.rm(path.join(projectPath, "src", "app", "App.tsx"), { force: true }); } catch {}
+            try { await fsp.rm(path.join(projectPath, "src", "app", "App.jsx"), { force: true }); } catch {}
+          }
+        }
+      },
     });
   }
 
@@ -220,6 +246,7 @@ export function resolveFragments(responses = {}, templatesDir) {
       sourceDir: path.join(templatesDir, "conditional", "state", "redux", architecture, "src"),
       targetDir: "src",
       action: async ({ projectPath }) => {
+        if (fw.name === "next") return;
         await updateMainWithProvider(projectPath, "redux", architecture, ext);
       },
     });
@@ -316,6 +343,106 @@ export function resolveFragments(responses = {}, templatesDir) {
       id: `tooling:api:${responses.apiClient}`,
       sourceDir: apiDir,
       targetDir: "src",
+      action: async ({ projectPath }) => {
+        if (fw.name === "next") {
+          const configCandidates = [
+            path.join(projectPath, "src", "config", `axios.config.${extConfig}`),
+            path.join(projectPath, "src", "shared", "lib", "axios", `api.config.${extConfig}`),
+            path.join(projectPath, "src", "config", `api.config.${extConfig}`),
+            path.join(projectPath, "src", "shared", "api", `api.config.${extConfig}`),
+          ];
+          for (const cfgPath of configCandidates) {
+            try {
+              let content = await fsp.readFile(cfgPath, "utf8");
+              if (content.includes("import.meta.env.VITE_API_URL")) {
+                content = content.replace(
+                  /import\.meta\.env\.VITE_API_URL/g,
+                  "process.env.NEXT_PUBLIC_API_URL"
+                );
+                await fsp.writeFile(cfgPath, content, "utf8");
+              }
+            } catch {}
+          }
+        }
+      },
+    });
+  }
+
+  // 5.45 Database (Prisma)
+  if (responses.database === "prisma") {
+    fragments.push({
+      scope: FRAGMENT_SCOPES.TOOLING,
+      category: "database",
+      id: "tooling:database:prisma",
+      scripts: {
+        "db:generate": "prisma generate",
+        "db:push": "prisma db push",
+        "db:seed": "prisma db seed",
+        "db:studio": "prisma studio",
+      },
+      action: async ({ projectPath, templatesDir: tDir }) => {
+        const prismaTplDir = path.join(tDir, "conditional", "database", "prisma");
+        const prismaDir = path.join(projectPath, "prisma");
+        await fsp.mkdir(prismaDir, { recursive: true });
+
+        // Copy schema.prisma
+        const schemaSrc = path.join(prismaTplDir, "schema.prisma");
+        const schemaDest = path.join(prismaDir, "schema.prisma");
+        try {
+          await fsp.access(schemaSrc);
+          await fsp.copyFile(schemaSrc, schemaDest);
+        } catch {}
+
+        // Copy seed file: prisma/seed.ts or prisma/seed.js
+        const seedFileName = language === "ts" ? "seed.ts" : "seed.js";
+        const seedSrc = path.join(prismaTplDir, seedFileName);
+        const seedDest = path.join(prismaDir, seedFileName);
+        try {
+          await fsp.access(seedSrc);
+          await fsp.copyFile(seedSrc, seedDest);
+        } catch {}
+
+        // Copy client singleton: src/lib/db.ts or src/lib/db.js
+        const libDir = path.join(projectPath, "src", "lib");
+        await fsp.mkdir(libDir, { recursive: true });
+        const dbFileName = language === "ts" ? "db.ts" : "db.js";
+        const dbSrc = path.join(prismaTplDir, dbFileName);
+        const dbDest = path.join(libDir, dbFileName);
+        try {
+          await fsp.access(dbSrc);
+          await fsp.copyFile(dbSrc, dbDest);
+        } catch {}
+
+        // Configure prisma.seed in package.json
+        const pkgPath = path.join(projectPath, "package.json");
+        try {
+          const content = await fsp.readFile(pkgPath, "utf8");
+          const pkg = JSON.parse(content);
+          pkg.prisma = {
+            seed: language === "ts" ? "tsx prisma/seed.ts" : "node prisma/seed.js",
+          };
+          await fsp.writeFile(pkgPath, JSON.stringify(pkg, null, 2) + "\n", "utf8");
+        } catch {}
+
+        // Append DATABASE_URL and DIRECT_URL to .env.example
+        const envExamplePath = path.join(projectPath, ".env.example");
+        const envLines = [
+          "",
+          "# Database (Prisma + PostgreSQL / Supabase)",
+          'DATABASE_URL="postgresql://postgres:[YOUR-PASSWORD]@db.[YOUR-PROJECT-REF].supabase.co:5432/postgres"',
+          'DIRECT_URL="postgresql://postgres:[YOUR-PASSWORD]@db.[YOUR-PROJECT-REF].supabase.co:5432/postgres"',
+        ].join("\n");
+        try {
+          let envContent = "";
+          try {
+            envContent = await fsp.readFile(envExamplePath, "utf8");
+          } catch {}
+          if (!envContent.includes("DATABASE_URL")) {
+            envContent = envContent.trimEnd() + "\n" + envLines.trimStart() + "\n";
+            await writeFileRecursive(envExamplePath, envContent);
+          }
+        } catch {}
+      },
     });
   }
 
@@ -335,11 +462,26 @@ export function resolveFragments(responses = {}, templatesDir) {
       scripts: testScripts,
       action: async ({ projectPath }) => {
         // Config file to project root
-        const configSrc = path.join(testingDir, `${testingFramework}.config.${extConfig}`);
-        try {
-          await fsp.access(configSrc);
-          await fsp.copyFile(configSrc, path.join(projectPath, `${testingFramework}.config.${extConfig}`));
-        } catch {}
+        if (testingFramework === "jest" && fw.name === "next") {
+          const nextConfigExt = language === "ts" ? "ts" : "mjs";
+          const configSrc = path.join(testingDir, "next", `jest.config.${nextConfigExt}`);
+          try {
+            await fsp.access(configSrc);
+            await fsp.copyFile(configSrc, path.join(projectPath, `jest.config.${nextConfigExt}`));
+          } catch {}
+        } else if (testingFramework === "vitest" && fw.name === "next") {
+          const configSrc = path.join(testingDir, "next", `vitest.config.${extConfig}`);
+          try {
+            await fsp.access(configSrc);
+            await fsp.copyFile(configSrc, path.join(projectPath, `vitest.config.${extConfig}`));
+          } catch {}
+        } else {
+          const configSrc = path.join(testingDir, `${testingFramework}.config.${extConfig}`);
+          try {
+            await fsp.access(configSrc);
+            await fsp.copyFile(configSrc, path.join(projectPath, `${testingFramework}.config.${extConfig}`));
+          } catch {}
+        }
 
         // Setup file to src/test/setup.*
         const setupSrc = path.join(testingDir, `src/test/setup.${extConfig}`);
@@ -355,20 +497,39 @@ export function resolveFragments(responses = {}, templatesDir) {
             await fsp.access(jestSetupSrc);
             await fsp.copyFile(jestSetupSrc, path.join(projectPath, `jest.setup.${extConfig}`));
           } catch {}
-          const babelSrc = path.join(testingDir, "babel.config.cjs");
-          try {
-            await fsp.access(babelSrc);
-            await fsp.copyFile(babelSrc, path.join(projectPath, "babel.config.cjs"));
-          } catch {}
+          if (fw.name !== "next") {
+            const babelSrc = path.join(testingDir, "babel.config.cjs");
+            try {
+              await fsp.access(babelSrc);
+              await fsp.copyFile(babelSrc, path.join(projectPath, "babel.config.cjs"));
+            } catch {}
+          }
         }
 
-        // Architecture-scoped test file
-        const testSrc = path.join(testingDir, architecture, `src/__tests__/App.test.${ext}`);
-        try {
-          await fsp.access(testSrc);
-          const testDest = path.join(projectPath, "src", "__tests__", `App.test.${ext}`);
-          await writeFileRecursive(testDest, await fsp.readFile(testSrc, "utf8"));
-        } catch {}
+        if (fw.name === "next") {
+          const testFileName = fw.variant === "pages-router" ? "index" : "page";
+          const testSrc = path.join(
+            testingDir,
+            "next",
+            fw.variant,
+            "src",
+            "__tests__",
+            `${testFileName}.test.${ext}`
+          );
+          try {
+            await fsp.access(testSrc);
+            const testDest = path.join(projectPath, "src", "__tests__", `${testFileName}.test.${ext}`);
+            await writeFileRecursive(testDest, await fsp.readFile(testSrc, "utf8"));
+          } catch {}
+        } else {
+          // Architecture-scoped test file
+          const testSrc = path.join(testingDir, architecture, `src/__tests__/App.test.${ext}`);
+          try {
+            await fsp.access(testSrc);
+            const testDest = path.join(projectPath, "src", "__tests__", `App.test.${ext}`);
+            await writeFileRecursive(testDest, await fsp.readFile(testSrc, "utf8"));
+          } catch {}
+        }
       },
     });
   }
@@ -525,11 +686,75 @@ export function resolveFragments(responses = {}, templatesDir) {
             }
           } catch {}
         }
+
+        // Apply standalone output to next.config if docker is enabled
+        if (responses.docker === true) {
+          const targetConfigPath = path.join(projectPath, `next.config.${configExt}`);
+          try {
+            let content = await fsp.readFile(targetConfigPath, "utf8");
+            if (!content.includes('"standalone"') && !content.includes("'standalone'")) {
+              content = content.replace(
+                /const nextConfig(?::\s*NextConfig)?\s*=\s*\{/,
+                (match) => `${match}\n  output: "standalone",`
+              );
+              await fsp.writeFile(targetConfigPath, content, "utf8");
+            }
+          } catch {}
+        }
       },
     });
   }
 
-  // 5.8 Formatter
+  // 5.8 Route Groups Preset & Auth Proxy Template (#64)
+  if (responses.routeGroups === true && fw.name === "next" && fw.variant === "app-router") {
+    fragments.push({
+      scope: FRAGMENT_SCOPES.TOOLING,
+      category: "route-groups",
+      id: "tooling:next:route-groups",
+      sourceDir: path.join(templatesDir, "conditional", "next", "route-groups", language),
+      targetDir: "",
+      action: async ({ projectPath }) => {
+        // Remove colliding root page so it does not collide with (public)/page
+        try {
+          await fsp.rm(path.join(projectPath, "src", "app", `page.${ext}`), { force: true });
+        } catch {}
+        const oppositeExt = language === "ts" ? "jsx" : "tsx";
+        try {
+          await fsp.rm(path.join(projectPath, "src", "app", `page.${oppositeExt}`), { force: true });
+        } catch {}
+        // Also remove page.js / page.tsx in case base provider was named page.js
+        try {
+          await fsp.rm(path.join(projectPath, "src", "app", "page.js"), { force: true });
+        } catch {}
+        try {
+          await fsp.rm(path.join(projectPath, "src", "app", "page.tsx"), { force: true });
+        } catch {}
+      },
+    });
+  }
+
+  // 5.9 Docker (Multi-stage Dockerfile and docker-compose for Next.js standalone)
+  if (responses.docker === true && hasCapability(fw, CAPABILITIES.DOCKER)) {
+    fragments.push({
+      scope: FRAGMENT_SCOPES.TOOLING,
+      category: "docker",
+      id: "tooling:docker",
+      action: async ({ projectPath }) => {
+        const dockerSrcDir = path.join(templatesDir, "conditional", "docker");
+        const filesToCopy = ["Dockerfile", ".dockerignore", "docker-compose.yml"];
+        for (const file of filesToCopy) {
+          const srcFile = path.join(dockerSrcDir, file);
+          const destFile = path.join(projectPath, file);
+          try {
+            await fsp.access(srcFile);
+            await fsp.copyFile(srcFile, destFile);
+          } catch {}
+        }
+      },
+    });
+  }
+
+  // 5.10 Formatter
   if (responses.formatter && responses.formatter !== "none") {
     const isPrettier = responses.formatter === "prettier";
     const configFile = isPrettier ? ".prettierrc" : ".oxfmtrc.json";

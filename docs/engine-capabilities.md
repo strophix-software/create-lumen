@@ -92,7 +92,7 @@ export const CAPABILITIES = {
   NEXT_FONT: "next-font",                   // Built-in font optimization
   NEXT_IMAGE: "next-image",                 // Built-in image optimization
   SPA_FALLBACK: "spa-fallback",             // Single Page Application rewrite fallback
-  AGENT_DOCS: "agent-docs",                 // LLM context scaffolding (.lumen/ directory)
+  AGENT_DOCS: "agent-docs",                 // LLM context scaffolding (AGENTS.md)
 };
 ```
 
@@ -330,7 +330,7 @@ sequenceDiagram
     UI-->>CLI: Write components/ui/ & lib/utils
     CLI->>Feat: Inject Conditionals (Router, Zustand, Axios, Icons)
     Feat-->>CLI: Merge conditional components & imports
-    CLI->>Manifest: Emit lumen.config.json & .lumen/
+    CLI->>Manifest: Emit lumen.config.json & AGENTS.md
     Manifest-->>CLI: Byte-deterministic manifest written
 ```
 
@@ -342,7 +342,7 @@ sequenceDiagram
 4. **UI Kit Overlay**: When `ui.kit === "shadcn"`, primitives (`Button`, `Card`) and helper utilities (`cn()`) are injected into the mapped UI directory.
 5. **Conditional Overlays**: Feature layers (`conditional/router`, `conditional/state/zustand`, `conditional/api/axios`, icons) overlaid onto the project.
 6. **Tooling & Aliases**: Configures `@/` alias resolution in `tsconfig.json`/`jsconfig.json` and linter/formatter configurations (`eslint.config.js`, `biome.json`, `.prettierrc`).
-7. **Manifest & Agent Context**: Writes `lumen.config.json` v2 and optional `.lumen/` directory for AI assistant integration.
+7. **Manifest & Agent Context**: Writes `lumen.config.json` v2 and optional `AGENTS.md` for AI assistant integration.
 
 ### Hermetic & Deterministic Generation
 
@@ -731,10 +731,7 @@ For projects created in human-agent collaborative environments (e.g. Antigravity
 npx create-lumen@alpha my-app --yes --agent-docs
 ```
 
-This generates a `.lumen/` directory at project root:
-- `.lumen/project.json`: Complete resolved manifest snapshot.
-- `.lumen/architecture.json`: Active architecture rules, path mappings, and validation level (`strict`).
-- `.lumen/conventions.md`: Code generation rules and style conventions consumed by agents.
+This generates an `AGENTS.md` file at project root referencing `lumen.config.json` as the Single Source of Truth (SSOT), documenting architecture rules, component taxonomy (`paths.ui`, `paths.components`, and feature components), harness commands, and framework-specific instructions.
 
 ---
 

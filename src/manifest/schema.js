@@ -23,6 +23,8 @@ export const DOCS_LANGUAGES = ["en", "es"];
 export const TOOLING_LANGUAGES = ["ts", "js"];
 export const TOOLING_LINTERS = ["eslint", "oxlint", "biome", "none"];
 export const TOOLING_FORMATTERS = ["prettier", "oxfmt", "none"];
+export const DATABASE_ORMS = ["prisma", "none"];
+export const DATABASE_PROVIDERS = ["postgresql"];
 
 // ---------------------------------------------------------------------------
 // Sub-schemas
@@ -121,6 +123,13 @@ const toolingSchema = z
   })
   .strict();
 
+const databaseSchema = z
+  .object({
+    orm: z.enum(DATABASE_ORMS),
+    provider: z.enum(DATABASE_PROVIDERS).optional().default("postgresql"),
+  })
+  .strict();
+
 // ---------------------------------------------------------------------------
 // Top-level manifest v2 - strict, no extra keys except $schema
 // ---------------------------------------------------------------------------
@@ -136,6 +145,9 @@ export const manifestSchemaV2 = z
     docs: docsSchema,
     paths: pathsSchema,
     tooling: toolingSchema,
+    database: databaseSchema.optional(),
+    docker: z.boolean().optional(),
+    routeGroups: z.boolean().optional(),
     reactCompiler: z.boolean().optional(),
     agentDocs: z.boolean().optional(),
   })
@@ -174,6 +186,24 @@ export const manifestSchemaV2 = z
         code: "custom",
         path: ["framework", "adapter"],
         message: `framework.adapter is only valid when framework.name is "next"`,
+      });
+    }
+
+    // database only for Next.js (#62)
+    if (val.database !== undefined && val.database.orm !== "none" && framework.name !== "next") {
+      ctx.addIssue({
+        code: "custom",
+        path: ["database", "orm"],
+        message: `database is only valid when framework.name is "next"`,
+      });
+    }
+
+    // routeGroups only for Next.js App Router (#64)
+    if (val.routeGroups === true && (framework.name !== "next" || framework.variant !== "app-router")) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["routeGroups"],
+        message: `routeGroups is only valid when framework is "next:app-router"`,
       });
     }
 

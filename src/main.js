@@ -257,7 +257,7 @@ export async function main(options = {}) {
   await cleanupBoilerplate(projectPath);
 
   // 12.5 Copy .env.example into the project
-  await copyEnvExample(projectPath, TEMPLATES_DIR);
+  await copyEnvExample(projectPath, TEMPLATES_DIR, responses);
 
   // 12.6 Emit lumen.config.json (manifest v2) — byte-deterministic, Zod-validated
   const manifestSpin = spinner();
@@ -270,15 +270,15 @@ export async function main(options = {}) {
     throw err;
   }
 
-  // 12.7 Emit .lumen agent context dir (only when agentDocs is enabled)
+  // 12.7 Emit AGENTS.md at root (only when agentDocs is enabled)
   if (responses.agentDocs === true || responses._manifestSource?.agentDocs === true) {
     const agentSpin = spinner();
-    agentSpin.start("Writing .lumen agent context...");
+    agentSpin.start("Writing AGENTS.md...");
     try {
       await emitAgentContext(projectPath, responses._manifestSource ?? responses);
-      agentSpin.stop(chalk.green(".lumen agent context written."));
+      agentSpin.stop(chalk.green("AGENTS.md written."));
     } catch (err) {
-      agentSpin.stop(chalk.red("Failed to write .lumen agent context."));
+      agentSpin.stop(chalk.red("Failed to write AGENTS.md."));
       throw err;
     }
   }

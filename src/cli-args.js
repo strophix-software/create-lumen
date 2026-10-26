@@ -280,10 +280,15 @@ export function parseCliArgs(argv = process.argv.slice(2)) {
       architecture: { type: "string" },
       bundler: { type: "string", short: "b" },
       adapter: { type: "string" },
+      database: { type: "string" },
+      db: { type: "string" },
       "react-compiler": { type: "boolean" },
       reactCompiler: { type: "boolean" },
+      "route-groups": { type: "boolean" },
+      routeGroups: { type: "boolean" },
       "agent-docs": { type: "boolean" },
       agentDocs: { type: "boolean" },
+      docker: { type: "boolean" },
       linter: { type: "string" },
       help: { type: "boolean", short: "h", default: false },
       version: { type: "boolean", short: "v", default: false },
@@ -303,8 +308,14 @@ export function parseCliArgs(argv = process.argv.slice(2)) {
 
   const bundler = values.bundler ? values.bundler.trim().toLowerCase() : null;
   const adapter = values.adapter ? values.adapter.trim().toLowerCase() : null;
+  let database = values.database || values.db || null;
+  if (database) {
+    database = database.trim().toLowerCase();
+  }
   const reactCompiler = values["react-compiler"] ?? values.reactCompiler ?? null;
+  const routeGroups = values["route-groups"] ?? values.routeGroups ?? null;
   const agentDocs = values["agent-docs"] ?? values.agentDocs ?? null;
+  const docker = Boolean(values.docker);
   const linter = values.linter ? values.linter.trim().toLowerCase() : null;
 
   return {
@@ -316,8 +327,11 @@ export function parseCliArgs(argv = process.argv.slice(2)) {
     arch,
     bundler,
     adapter,
+    database,
     reactCompiler,
+    routeGroups,
     agentDocs,
+    docker,
     linter,
     help: Boolean(values.help),
     version: Boolean(values.version),
@@ -368,7 +382,10 @@ export function manifestToResponses(manifest, projectName) {
   const canClientRoute = isPromptVisible(framework, "router");
   const supportsBundler = isPromptVisible(framework, "bundler");
   const supportsAdapter = isPromptVisible(framework, "adapter");
+  const supportsDatabase = isPromptVisible(framework, "database");
   const supportsCompiler = isPromptVisible(framework, "reactCompiler");
+  const supportsRouteGroups = isPromptVisible(framework, "routeGroups");
+  const supportsDocker = isPromptVisible(framework, "docker");
 
   return {
     projectName,
@@ -382,6 +399,10 @@ export function manifestToResponses(manifest, projectName) {
       supportsAdapter && manifest.framework?.adapter
         ? manifest.framework.adapter
         : undefined,
+    database:
+      supportsDatabase && manifest.database?.orm
+        ? manifest.database.orm
+        : "none",
     architecture: manifest.architecture?.type || "feature-based",
     language: manifest.tooling?.language || "ts",
     cssFramework: manifest.styling?.engine || "tailwind",
@@ -390,7 +411,9 @@ export function manifestToResponses(manifest, projectName) {
     uiKit: manifest.ui?.kit || "none",
     docsLanguage: manifest.docs?.language || "en",
     reactCompiler: supportsCompiler ? manifest.reactCompiler : undefined,
+    routeGroups: supportsRouteGroups ? manifest.routeGroups : undefined,
     agentDocs: manifest.agentDocs,
+    docker: supportsDocker ? (manifest.docker ?? false) : false,
     // Sensible defaults for scaffolder conditional passes (Next.js ships no
     // verified test-runner overlay yet, so it defaults to none; explicit
     // vitest/jest selection still applies the standard overlays)
@@ -421,6 +444,9 @@ ${chalk.bold("OPTIONS")}
   ${chalk.yellow("-m, --manifest")} <path>  Drive scaffolding from a lumen.config.json or inline JSON
   ${chalk.yellow("-t, --template")} <name>  Scaffold using a preset (${Object.keys(PRESETS).join(", ")})
   ${chalk.yellow("-f, --framework")} <name> Target framework (react, next, react:vite, next:app-router, etc.)
+  ${chalk.yellow("--db, --database")} <orm> Database ORM (prisma, none)
+  ${chalk.yellow("    --docker")}           Include multi-stage Dockerfile & docker-compose for Next.js standalone
+  ${chalk.yellow("--route-groups")}         Include Next.js route groups preset (public, auth, private, admin)
   ${chalk.yellow("-h, --help")}             Show this help message
   ${chalk.yellow("-v, --version")}          Show version number
 

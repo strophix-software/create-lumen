@@ -47,14 +47,17 @@ test("prompts: interactive framework step selects Next App Router and gates rout
       "Which testing framework do you want to set up?": "vitest",
       "Which bundler do you want to use?": "turbopack",
       "Which deployment adapter do you want to use?": "none",
+      "Which database ORM do you want to use?": "none",
       "Would you like to enable the React Compiler (experimental)?": false,
+      "Include route groups preset (public, auth, private, admin)?": false,
+      "Include Docker setup?": false,
       "Which state management library do you want to use?": "none",
       "Which icon library would you like to use?": "none",
       "Which API client do you want to use?": "none",
       "Would you like to initialize a Git repository?": false,
       "Which linter do you want to use?": "eslint",
       "Which formatter do you want to use?": "prettier",
-      "Generate .lumen/ agent context for AI assistants?": false,
+      "Generate AGENTS.md for AI assistants?": false,
       "Which docs language do you want?": "en",
       "Would you like to generate a README.md and LICENSE?": false,
       "Proceed with project generation?": true,
@@ -118,7 +121,7 @@ test("prompts: shadcn selectable with tailwind, skipped without it", async () =>
         "Would you like to initialize a Git repository?": false,
         "Which linter do you want to use?": "eslint",
         "Which formatter do you want to use?": "prettier",
-        "Generate .lumen/ agent context for AI assistants?": false,
+        "Generate AGENTS.md for AI assistants?": false,
         "Which docs language do you want?": "en",
         "Would you like to generate a README.md and LICENSE?": false,
         "Proceed with project generation?": true,
@@ -196,7 +199,7 @@ test("prompts: agentDocs prompt records opt-in and shows in summary", async () =
       "Would you like to initialize a Git repository?": false,
       "Which linter do you want to use?": "eslint",
       "Which formatter do you want to use?": "prettier",
-      "Generate .lumen/ agent context for AI assistants?": true,
+      "Generate AGENTS.md for AI assistants?": true,
       "Which docs language do you want?": "en",
       "Would you like to generate a README.md and LICENSE?": false,
       "Proceed with project generation?": true,
@@ -224,14 +227,17 @@ test("prompts: end-of-flow sanitize coerces stale reselected answers", async () 
       "Which testing framework do you want to set up?": "vitest",
       "Which bundler do you want to use?": "turbopack",
       "Which deployment adapter do you want to use?": "none",
+      "Which database ORM do you want to use?": "none",
       "Would you like to enable the React Compiler (experimental)?": false,
+      "Include route groups preset (public, auth, private, admin)?": false,
+      "Include Docker setup?": false,
       "Which state management library do you want to use?": "none",
       "Which icon library would you like to use?": "none",
       "Which API client do you want to use?": "none",
       "Would you like to initialize a Git repository?": false,
       "Which linter do you want to use?": "eslint",
       "Which formatter do you want to use?": "prettier",
-      "Generate .lumen/ agent context for AI assistants?": false,
+      "Generate AGENTS.md for AI assistants?": false,
       "Which docs language do you want?": "en",
       "Would you like to generate a README.md and LICENSE?": false,
       "Proceed with project generation?": true,
@@ -266,4 +272,42 @@ test("defaults: Next.js does not default to vitest", () => {
   assert.equal(getDefaultResponses("next", {}).testing, "none");
   assert.equal(getDefaultResponses("next:pages-router", {}).testing, "none");
   assert.equal(getDefaultResponses("react", {}).testing, "vitest");
+});
+
+test("prompts: testing prompt defaults to none for Next.js and vitest for React (#66)", async () => {
+  let promptInitialTestingNext;
+  await getUserInputs("app-next-testing", {
+    quickSetup: false,
+    framework: "next",
+    configExistsFn: async () => false,
+    saveConfigFn: async () => {},
+    selectFn: async ({ message, initialValue, options }) => {
+      if (message.includes("Quick Setup?")) return false;
+      if (message.includes("Which testing framework")) {
+        promptInitialTestingNext = initialValue;
+      }
+      if (message.includes("Proceed with project generation?")) return true;
+      return options[0].value;
+    },
+    noteFn: () => {},
+  });
+  assert.equal(promptInitialTestingNext, "none", "Next.js testing prompt should default initial to 'none'");
+
+  let promptInitialTestingReact;
+  await getUserInputs("app-react-testing", {
+    quickSetup: false,
+    framework: "react",
+    configExistsFn: async () => false,
+    saveConfigFn: async () => {},
+    selectFn: async ({ message, initialValue, options }) => {
+      if (message.includes("Quick Setup?")) return false;
+      if (message.includes("Which testing framework")) {
+        promptInitialTestingReact = initialValue;
+      }
+      if (message.includes("Proceed with project generation?")) return true;
+      return options[0].value;
+    },
+    noteFn: () => {},
+  });
+  assert.equal(promptInitialTestingReact, "vitest", "React testing prompt should default initial to 'vitest'");
 });

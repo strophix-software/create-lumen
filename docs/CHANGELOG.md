@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [2.0.0-beta.2] — 2026-10-26
+
+### Added
+
+- **Fullstack Next.js Prisma ORM and database scaffolding** (#62) — `--database prisma` flag and manifest capability support (`sqlite`, `postgresql`, `mysql`, `sqlserver`, `cockroachdb`, `mongodb`); generates `prisma/schema.prisma`, singleton database client (`src/lib/db.ts` or `src/shared/lib/db.ts`), seed script, package scripts (`db:generate`, `db:push`, `db:migrate`, `db:seed`), and `DATABASE_URL` environment variables.
+- **Next.js multi-stage Docker & docker-compose standalone** (#63) — `--docker` flag and manifest capability; scaffolds multi-stage production Dockerfile targeting Next.js `output: "standalone"`, `.dockerignore`, `docker-compose.yml`, and automatically injects `output: "standalone"` into `next.config.ts` / `next.config.mjs` / `next.config.js`.
+- **Next.js Route Groups preset & Auth Proxy** (#64) — `--route-groups` preset scaffolds segregated App Router directory structure: `(public)`, `(auth)` with login/register pages, `(private)` with dashboard, and `(admin)`. Includes auth proxy edge middleware (`src/proxy.ts` / `src/middleware.ts`) enforcing authenticated route protection.
+- **Root `AGENTS.md` Single Source of Truth & Component Taxonomy** (#67) — replaces redundant `.lumen/` directory with root `AGENTS.md` referencing `lumen.config.json` as the sole contract. Includes the official Next.js warning block verbatim (`"This is NOT the Next.js you know..."`) and formalizes the 3-tier component taxonomy contract across `create-lumen` and `lumen-cli`:
+  1. Atomic UI primitives (`paths.ui`): `@/shared/components/ui` or `@/components/ui`.
+  2. Compound components (`paths.components`): `@/shared/components` or `@/components`.
+  3. Feature domain components (`paths.features/<feature>/components`): `@/features/<feature>/components`.
+
+### Fixed
+
+- **Strict Zero-Babel policy for Next.js with Jest** (#65) — eliminates `babel.config.cjs` when Jest is selected on Next.js, adopting native Next.js SWC compilation via `next/jest.js` (`createJestConfig`), preventing Turbopack and `next dev` crashes.
+- **Removed Vite-specific dependencies & adapted overlays for Next.js** (#66) — adapted Vitest config on Next.js to run without `@vitejs/plugin-react`, and migrated API client overlays from `import.meta.env` to `process.env.NEXT_PUBLIC_API_URL`.
+- **Prevented internal `.provenance.json` leakage** (#68) — excluded internal snapshot provenance metadata from copying into user-generated projects.
+- **Purged React SPA application layer from Next.js root `src/app/`** — removed `App.tsx`, `contexts/`, and `providers/` pollution from Next.js App Router root, consolidated hooks to `src/shared/hooks/` as the single shared hooks source, and eliminated `src/app/` from Pages Router scaffolds.
+
 ## [2.0.0-beta.1] — 2026-10-26
 
 ### Added
