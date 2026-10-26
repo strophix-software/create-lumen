@@ -1,4 +1,4 @@
-﻿import { isCancel, note, select } from "@clack/prompts";
+import { isCancel, note, select } from "@clack/prompts";
 import chalk from "chalk";
 import { configExists, loadConfig, saveConfig } from "@/config-cache.js";
 import {
@@ -73,6 +73,9 @@ export function formatConfig(responses) {
   }
   if (responses.reactCompiler !== undefined) {
     lines.push(`• ${chalk.bold("React Compiler:")} ${responses.reactCompiler ? chalk.green("Yes") : chalk.red("No")}`);
+  }
+  if (responses.docker !== undefined) {
+    lines.push(`• ${chalk.bold("Docker:")} ${responses.docker ? chalk.green("Yes") : chalk.red("No")}`);
   }
   lines.push(
     `• ${chalk.bold("State:")} ${chalk.blue(state)}`,
@@ -470,6 +473,19 @@ export async function getUserInputs(
       defaultInitial: false,
     },
     {
+      id: "docker",
+      skip: () => !isPromptVisible(framework, "docker"),
+      onSkip: (ans) => {
+        ans.docker = false;
+      },
+      message: "Include Docker setup?",
+      getOptions: () => [
+        { label: "No (default)", value: false },
+        { label: "Yes", value: true, hint: "Multi-stage Dockerfile and docker-compose" },
+      ],
+      defaultInitial: false,
+    },
+    {
       id: "stateManagement",
       message: "Which state management library do you want to use?",
       getOptions: () => [
@@ -622,6 +638,7 @@ export async function getUserInputs(
     adapter,
     reactCompiler,
     agentDocs,
+    docker,
     ...picked
   } = responses;
   // Final safety net: BACK-navigation can reselect the framework after other
@@ -643,6 +660,9 @@ export async function getUserInputs(
   }
   if (agentDocs !== undefined) {
     finalResponses.agentDocs = agentDocs;
+  }
+  if (docker !== undefined) {
+    finalResponses.docker = docker;
   }
 
   // No config cache write until final confirm!

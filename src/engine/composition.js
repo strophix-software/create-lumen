@@ -45,6 +45,7 @@ export const TOOLING_ORDER = [
   "linter",
   "feature-script",
   "next-config",
+  "docker",
   "formatter",
 ];
 
@@ -553,11 +554,47 @@ export function resolveFragments(responses = {}, templatesDir) {
             }
           } catch {}
         }
+
+        // Apply standalone output to next.config if docker is enabled
+        if (responses.docker === true) {
+          const targetConfigPath = path.join(projectPath, `next.config.${configExt}`);
+          try {
+            let content = await fsp.readFile(targetConfigPath, "utf8");
+            if (!content.includes('"standalone"') && !content.includes("'standalone'")) {
+              content = content.replace(
+                /const nextConfig(?::\s*NextConfig)?\s*=\s*\{/,
+                (match) => `${match}\n  output: "standalone",`
+              );
+              await fsp.writeFile(targetConfigPath, content, "utf8");
+            }
+          } catch {}
+        }
       },
     });
   }
 
-  // 5.8 Formatter
+  // 5.8 Docker (Multi-stage Dockerfile and docker-compose for Next.js standalone)
+  if (responses.docker === true && hasCapability(fw, CAPABILITIES.DOCKER)) {
+    fragments.push({
+      scope: FRAGMENT_SCOPES.TOOLING,
+      category: "docker",
+      id: "tooling:docker",
+      action: async ({ projectPath }) => {
+        const dockerSrcDir = path.join(templatesDir, "conditional", "docker");
+        const filesToCopy = ["Dockerfile", ".dockerignore", "docker-compose.yml"];
+        for (const file of filesToCopy) {
+          const srcFile = path.join(dockerSrcDir, file);
+          const destFile = path.join(projectPath, file);
+          try {
+            await fsp.access(srcFile);
+            await fsp.copyFile(srcFile, destFile);
+          } catch {}
+        }
+      },
+    });
+  }
+
+  // 5.9 Formatter
   if (responses.formatter && responses.formatter !== "none") {
     const isPrettier = responses.formatter === "prettier";
     const configFile = isPrettier ? ".prettierrc" : ".oxfmtrc.json";

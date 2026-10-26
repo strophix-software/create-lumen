@@ -119,6 +119,7 @@ export function buildManifest(responses, opts = {}) {
   // Optional cross-cutting flags — only include if explicitly set (keeps minimal manifest byte-stable)
   if (typeof responses.reactCompiler === "boolean") manifest.reactCompiler = responses.reactCompiler;
   if (typeof responses.agentDocs === "boolean") manifest.agentDocs = responses.agentDocs;
+  if (typeof responses.docker === "boolean") manifest.docker = responses.docker;
 
   // Enforce stable top-level key order for determinism (like formatter pass)
   const ordered = {};
@@ -133,6 +134,9 @@ export function buildManifest(responses, opts = {}) {
     "docs",
     "paths",
     "tooling",
+    "database",
+    "docker",
+    "routeGroups",
     "reactCompiler",
     "agentDocs",
   ];
