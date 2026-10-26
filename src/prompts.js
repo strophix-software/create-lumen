@@ -77,6 +77,9 @@ export function formatConfig(responses) {
   if (responses.reactCompiler !== undefined) {
     lines.push(`• ${chalk.bold("React Compiler:")} ${responses.reactCompiler ? chalk.green("Yes") : chalk.red("No")}`);
   }
+  if (responses.routeGroups !== undefined) {
+    lines.push(`• ${chalk.bold("Route Groups:")} ${responses.routeGroups ? chalk.green("Yes") : chalk.red("No")}`);
+  }
   if (responses.docker !== undefined) {
     lines.push(`• ${chalk.bold("Docker:")} ${responses.docker ? chalk.green("Yes") : chalk.red("No")}`);
   }
@@ -494,6 +497,19 @@ export async function getUserInputs(
       defaultInitial: false,
     },
     {
+      id: "routeGroups",
+      skip: () => !isPromptVisible(framework, "routeGroups"),
+      onSkip: (ans) => {
+        ans.routeGroups = false;
+      },
+      message: "Include route groups preset (public, auth, private, admin)?",
+      getOptions: () => [
+        { label: "No (default)", value: false },
+        { label: "Yes", value: true },
+      ],
+      defaultInitial: false,
+    },
+    {
       id: "docker",
       skip: () => !isPromptVisible(framework, "docker"),
       onSkip: (ans) => {
@@ -659,6 +675,7 @@ export async function getUserInputs(
     adapter,
     database,
     reactCompiler,
+    routeGroups,
     agentDocs,
     docker,
     ...picked
@@ -682,6 +699,9 @@ export async function getUserInputs(
   }
   if (reactCompiler !== undefined) {
     finalResponses.reactCompiler = reactCompiler;
+  }
+  if (routeGroups !== undefined) {
+    finalResponses.routeGroups = routeGroups;
   }
   if (agentDocs !== undefined) {
     finalResponses.agentDocs = agentDocs;

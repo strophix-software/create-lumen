@@ -284,6 +284,8 @@ export function parseCliArgs(argv = process.argv.slice(2)) {
       db: { type: "string" },
       "react-compiler": { type: "boolean" },
       reactCompiler: { type: "boolean" },
+      "route-groups": { type: "boolean" },
+      routeGroups: { type: "boolean" },
       "agent-docs": { type: "boolean" },
       agentDocs: { type: "boolean" },
       docker: { type: "boolean" },
@@ -311,6 +313,7 @@ export function parseCliArgs(argv = process.argv.slice(2)) {
     database = database.trim().toLowerCase();
   }
   const reactCompiler = values["react-compiler"] ?? values.reactCompiler ?? null;
+  const routeGroups = values["route-groups"] ?? values.routeGroups ?? null;
   const agentDocs = values["agent-docs"] ?? values.agentDocs ?? null;
   const docker = Boolean(values.docker);
   const linter = values.linter ? values.linter.trim().toLowerCase() : null;
@@ -326,6 +329,7 @@ export function parseCliArgs(argv = process.argv.slice(2)) {
     adapter,
     database,
     reactCompiler,
+    routeGroups,
     agentDocs,
     docker,
     linter,
@@ -380,6 +384,7 @@ export function manifestToResponses(manifest, projectName) {
   const supportsAdapter = isPromptVisible(framework, "adapter");
   const supportsDatabase = isPromptVisible(framework, "database");
   const supportsCompiler = isPromptVisible(framework, "reactCompiler");
+  const supportsRouteGroups = isPromptVisible(framework, "routeGroups");
   const supportsDocker = isPromptVisible(framework, "docker");
 
   return {
@@ -406,6 +411,7 @@ export function manifestToResponses(manifest, projectName) {
     uiKit: manifest.ui?.kit || "none",
     docsLanguage: manifest.docs?.language || "en",
     reactCompiler: supportsCompiler ? manifest.reactCompiler : undefined,
+    routeGroups: supportsRouteGroups ? manifest.routeGroups : undefined,
     agentDocs: manifest.agentDocs,
     docker: supportsDocker ? (manifest.docker ?? false) : false,
     // Sensible defaults for scaffolder conditional passes (Next.js ships no
@@ -440,6 +446,7 @@ ${chalk.bold("OPTIONS")}
   ${chalk.yellow("-f, --framework")} <name> Target framework (react, next, react:vite, next:app-router, etc.)
   ${chalk.yellow("--db, --database")} <orm> Database ORM (prisma, none)
   ${chalk.yellow("    --docker")}           Include multi-stage Dockerfile & docker-compose for Next.js standalone
+  ${chalk.yellow("--route-groups")}         Include Next.js route groups preset (public, auth, private, admin)
   ${chalk.yellow("-h, --help")}             Show this help message
   ${chalk.yellow("-v, --version")}          Show version number
 

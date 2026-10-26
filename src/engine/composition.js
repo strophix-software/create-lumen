@@ -46,6 +46,7 @@ export const TOOLING_ORDER = [
   "linter",
   "feature-script",
   "next-config",
+  "route-groups",
   "docker",
   "formatter",
 ];
@@ -652,7 +653,35 @@ export function resolveFragments(responses = {}, templatesDir) {
     });
   }
 
-  // 5.8 Docker (Multi-stage Dockerfile and docker-compose for Next.js standalone)
+  // 5.8 Route Groups Preset & Auth Proxy Template (#64)
+  if (responses.routeGroups === true && fw.name === "next" && fw.variant === "app-router") {
+    fragments.push({
+      scope: FRAGMENT_SCOPES.TOOLING,
+      category: "route-groups",
+      id: "tooling:next:route-groups",
+      sourceDir: path.join(templatesDir, "conditional", "next", "route-groups", language),
+      targetDir: "",
+      action: async ({ projectPath }) => {
+        // Remove colliding root page so it does not collide with (public)/page
+        try {
+          await fsp.rm(path.join(projectPath, "src", "app", `page.${ext}`), { force: true });
+        } catch {}
+        const oppositeExt = language === "ts" ? "jsx" : "tsx";
+        try {
+          await fsp.rm(path.join(projectPath, "src", "app", `page.${oppositeExt}`), { force: true });
+        } catch {}
+        // Also remove page.js / page.tsx in case base provider was named page.js
+        try {
+          await fsp.rm(path.join(projectPath, "src", "app", "page.js"), { force: true });
+        } catch {}
+        try {
+          await fsp.rm(path.join(projectPath, "src", "app", "page.tsx"), { force: true });
+        } catch {}
+      },
+    });
+  }
+
+  // 5.9 Docker (Multi-stage Dockerfile and docker-compose for Next.js standalone)
   if (responses.docker === true && hasCapability(fw, CAPABILITIES.DOCKER)) {
     fragments.push({
       scope: FRAGMENT_SCOPES.TOOLING,
@@ -673,7 +702,7 @@ export function resolveFragments(responses = {}, templatesDir) {
     });
   }
 
-  // 5.9 Formatter
+  // 5.10 Formatter
   if (responses.formatter && responses.formatter !== "none") {
     const isPrettier = responses.formatter === "prettier";
     const configFile = isPrettier ? ".prettierrc" : ".oxfmtrc.json";

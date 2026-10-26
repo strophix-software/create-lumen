@@ -126,6 +126,7 @@ export function buildManifest(responses, opts = {}) {
   if (typeof responses.docker === "boolean") manifest.docker = responses.docker;
   if (typeof responses.routeGroups === "boolean") manifest.routeGroups = responses.routeGroups;
   if (typeof responses.reactCompiler === "boolean") manifest.reactCompiler = responses.reactCompiler;
+  if (typeof responses.routeGroups === "boolean") manifest.routeGroups = responses.routeGroups;
   if (typeof responses.agentDocs === "boolean") manifest.agentDocs = responses.agentDocs;
   if (typeof responses.docker === "boolean") manifest.docker = responses.docker;
 

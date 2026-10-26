@@ -329,3 +329,37 @@ test("cli-args: parses --docker flag and maps manifest.docker", () => {
   );
   assert.equal(reactResponses.docker, false);
 });
+
+test("cli-args: parses --route-groups boolean flag and maps manifest.routeGroups", () => {
+  const parsed = parseCliArgs(["--route-groups"]);
+  assert.equal(parsed.routeGroups, true);
+
+  const baseManifest = {
+    manifestVersion: 2,
+    framework: { name: "next", variant: "app-router" },
+    styling: { engine: "tailwind" },
+    architecture: { type: "feature-based" },
+    ui: { kit: "none" },
+    docs: { language: "en" },
+    paths: {
+      features: "src/features",
+      components: "src/components",
+      services: "src/services",
+      hooks: "src/hooks",
+      pages: "src/pages",
+      ui: "src/components/ui",
+    },
+    tooling: { language: "ts", linter: "eslint", formatter: "prettier" },
+    routeGroups: true,
+  };
+
+  const responses = manifestToResponses(baseManifest, "route-groups-app");
+  assert.equal(responses.routeGroups, true);
+
+  // When framework is React/Vite, routeGroups must not be forwarded
+  const reactResponses = manifestToResponses(
+    { ...baseManifest, framework: { name: "react", variant: "vite" } },
+    "react-app"
+  );
+  assert.equal(reactResponses.routeGroups, undefined);
+});
