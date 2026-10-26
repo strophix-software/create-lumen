@@ -621,10 +621,10 @@ export async function getUserInputs(
     },
     {
       id: "agentDocs",
-      message: "Generate .lumen/ agent context for AI assistants?",
+      message: "Generate AGENTS.md for AI assistants?",
       getOptions: () => [
         { label: "No (default)", value: false },
-        { label: "Yes", value: true, hint: "Emits .lumen/ with project, architecture and conventions" },
+        { label: "Yes", value: true, hint: "Emits AGENTS.md referencing lumen.config.json (SSOT)" },
       ],
       defaultInitial: false,
     },

@@ -4,7 +4,7 @@ import { promises as fsp } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { buildManifest } from "../../src/manifest/emit.js";
-import { buildAgentContext, emitAgentContext } from "../../src/agent-context.js";
+import { buildAgentContext, emitAgentContext, renderAgentsMd } from "../../src/agent-context.js";
 
 const baseResponses = {
   projectName: "my-app",
@@ -24,89 +24,98 @@ const baseResponses = {
   agentDocs: true,
 };
 
-test("buildAgentContext: reflects preset/validation/paths/harness", () => {
+test("renderAgentsMd: reflects SSOT, preset, validation, component taxonomy, and harness", () => {
   const manifest = buildManifest(baseResponses);
-  const { project, architecture, conventionsMd } = buildAgentContext(manifest);
+  const md = renderAgentsMd(manifest);
 
-  assert.equal(architecture.preset, "feature-based");
-  assert.equal(architecture.validation, "strict");
-  assert.deepEqual(architecture.paths, manifest.paths);
-  assert.deepEqual(project.harness, manifest.harness);
-  assert.deepEqual(project.framework, manifest.framework);
-  assert.deepEqual(project.tooling, manifest.tooling);
-  assert.deepEqual(project.docs, manifest.docs);
-  assert.deepEqual(project.styling, manifest.styling);
-  assert.equal(project.manifestVersion, 2);
-
-  // No timestamps anywhere
-  assert.ok(!("generatedAt" in project), "project must not contain generatedAt");
-  assert.ok(!("generatedAt" in architecture), "architecture must not contain generatedAt");
-
-  // conventions.md mentions the key rules
-  assert.ok(conventionsMd.includes("paths.*"), "must reference paths.*");
-  assert.ok(conventionsMd.includes("src/features/<feature>/"), "must include barrel rule");
-  assert.ok(conventionsMd.includes("`index.ts`"), "must name the barrel file");
-  assert.ok(conventionsMd.includes("@/shared"), "must reference @/shared");
-  assert.ok(conventionsMd.includes("harness.commands"), "must reference harness.commands");
-  assert.ok(conventionsMd.includes("`strict`"), "must mention validation mode");
+  assert.ok(md.startsWith("# AGENTS.md"), "must start with AGENTS.md heading");
+  assert.ok(md.includes("Single Source of Truth (SSOT)"), "must reference SSOT");
+  assert.ok(md.includes("`lumen.config.json`"), "must reference lumen.config.json");
+  assert.ok(md.includes("paths.*"), "must reference paths.*");
+  assert.ok(md.includes("`feature-based`"), "must specify architecture preset");
+  assert.ok(md.includes("`strict`"), "must specify validation mode");
+  assert.ok(md.includes("`index.ts`"), "must specify barrel file");
+  assert.ok(md.includes("@/shared"), "must reference @/shared");
+  assert.ok(md.includes("Component Taxonomy"), "must include component taxonomy section");
+  assert.ok(md.includes("Atomic UI Primitives"), "must document atomic UI primitives");
+  assert.ok(md.includes("Compound Components"), "must document compound components");
+  assert.ok(md.includes("Feature Components"), "must document feature components");
+  assert.ok(md.includes("Validation Harness"), "must include validation harness");
+  assert.ok(md.includes("harness.commands"), "must reference harness.commands");
+  assert.ok(md.endsWith("\n"), "must end with a newline");
 });
 
-test("buildAgentContext: type-based preset + relaxed validation", () => {
-  const manifest = buildManifest({ ...baseResponses, architecture: "type-based", architectureValidation: "relaxed" });
-  const { architecture, conventionsMd } = buildAgentContext(manifest);
-  assert.equal(architecture.preset, "type-based");
-  assert.equal(architecture.validation, "relaxed");
-  assert.ok(conventionsMd.includes("`relaxed`"));
-  assert.ok(conventionsMd.includes("src/components") || conventionsMd.includes("components"));
+test("renderAgentsMd: Next.js includes official warning notice and component rules", () => {
+  const nextResponses = {
+    ...baseResponses,
+    frameworkName: "next",
+    frameworkVariant: "app-router",
+    bundler: "turbopack",
+    adapter: "none",
+    architecture: "feature-based",
+  };
+  const manifest = buildManifest(nextResponses);
+  const md = renderAgentsMd(manifest);
+
+  const expectedWarning =
+    `<!-- BEGIN:nextjs-agent-rules -->\n` +
+    `## This is NOT the Next.js you know\n` +
+    `This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in node_modules/next/dist/docs/ (resolved from this file's directory...) before writing any code. Heed deprecation notices.\n` +
+    `<!-- END:nextjs-agent-rules -->`;
+
+  assert.ok(md.includes(expectedWarning), "must include official Next.js agent warning verbatim");
+  assert.ok(md.includes('"use client"'), "must include 'use client' rule");
+  assert.ok(md.includes("React Server Components (RSC)"), "must document RSC");
 });
 
-test("emitAgentContext: writes 3 files and is byte-deterministic", async () => {
+test("buildAgentContext: backwards compatible helper", () => {
+  const manifest = buildManifest(baseResponses);
+  const ctx = buildAgentContext(manifest);
+  assert.ok(ctx.agentsMd);
+  assert.equal(ctx.agentsMd, ctx.conventionsMd);
+});
+
+test("emitAgentContext: writes AGENTS.md at root without .lumen/ and is byte-deterministic", async () => {
   const dir = await fsp.mkdtemp(path.join(os.tmpdir(), "lumen-agent-ctx-"));
-  const outDir = await emitAgentContext(dir, baseResponses);
+  const outFile = await emitAgentContext(dir, baseResponses);
 
-  assert.equal(outDir, path.join(dir, ".lumen"));
-  for (const file of ["project.json", "architecture.json", "conventions.md"]) {
-    const stat = await fsp.stat(path.join(outDir, file));
-    assert.ok(stat.isFile(), `${file} must exist`);
+  assert.equal(outFile, path.join(dir, "AGENTS.md"));
+
+  const stat = await fsp.stat(outFile);
+  assert.ok(stat.isFile(), "AGENTS.md must exist at root");
+
+  // .lumen directory must NOT exist
+  let lumenDirExists = false;
+  try {
+    await fsp.access(path.join(dir, ".lumen"));
+    lumenDirExists = true;
+  } catch {
+    lumenDirExists = false;
   }
+  assert.equal(lumenDirExists, false, ".lumen/ directory must not exist");
 
-  const files = ["project.json", "architecture.json", "conventions.md"];
-  const first = {};
-  for (const file of files) {
-    const content = await fsp.readFile(path.join(outDir, file), "utf8");
-    assert.ok(content.endsWith("\n"), `${file} must end with newline`);
-    first[file] = content;
-  }
-
-  // JSON files parse and carry no timestamps
-  const project = JSON.parse(first["project.json"]);
-  assert.equal(project.manifestVersion, 2);
-  assert.ok(!("generatedAt" in project));
-  const arch = JSON.parse(first["architecture.json"]);
-  assert.deepEqual(Object.keys(arch), ["preset", "validation", "paths"]);
-  assert.equal(arch.preset, "feature-based");
+  const first = await fsp.readFile(outFile, "utf8");
+  assert.ok(first.endsWith("\n"), "AGENTS.md must end with newline");
+  assert.ok(first.includes("Single Source of Truth (SSOT)"));
 
   // Double emission = byte-identical
   await emitAgentContext(dir, baseResponses);
-  for (const file of files) {
-    const content = await fsp.readFile(path.join(outDir, file), "utf8");
-    assert.equal(content, first[file], `${file} must be byte-identical on re-emit`);
-  }
+  const second = await fsp.readFile(outFile, "utf8");
+  assert.equal(second, first, "AGENTS.md must be byte-identical on re-emit");
 });
 
 test("emitAgentContext: accepts a validated manifest directly", async () => {
   const manifest = buildManifest(baseResponses);
   const dir = await fsp.mkdtemp(path.join(os.tmpdir(), "lumen-agent-ctx-manifest-"));
-  await emitAgentContext(dir, manifest);
-  const project = JSON.parse(await fsp.readFile(path.join(dir, ".lumen", "project.json"), "utf8"));
-  assert.deepEqual(project.harness, manifest.harness);
+  const outPath = await emitAgentContext(dir, manifest);
+  assert.equal(outPath, path.join(dir, "AGENTS.md"));
+
+  const content = await fsp.readFile(outPath, "utf8");
+  assert.ok(content.includes("harness.commands"));
 
   // Same bytes as emitting from responses
   const dir2 = await fsp.mkdtemp(path.join(os.tmpdir(), "lumen-agent-ctx-resp-"));
   await emitAgentContext(dir2, baseResponses);
-  for (const file of ["project.json", "architecture.json", "conventions.md"]) {
-    const a = await fsp.readFile(path.join(dir, ".lumen", file), "utf8");
-    const b = await fsp.readFile(path.join(dir2, ".lumen", file), "utf8");
-    assert.equal(a, b, `${file} must match between manifest and responses input`);
-  }
+  const content2 = await fsp.readFile(path.join(dir2, "AGENTS.md"), "utf8");
+  assert.equal(content, content2, "AGENTS.md must match between manifest and responses input");
 });
