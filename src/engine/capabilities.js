@@ -18,6 +18,9 @@ export const CAPABILITIES = {
   NEXT_IMAGE: "next-image",
   SPA_FALLBACK: "spa-fallback",
   AGENT_DOCS: "agent-docs",
+  DATABASE: "database",
+  DOCKER: "docker",
+  ROUTE_GROUPS: "route-groups",
 };
 
 export const FRAMEWORK_CAPABILITIES = {
@@ -37,6 +40,7 @@ export const FRAMEWORK_CAPABILITIES = {
     allowedFormatters: ["prettier", "oxfmt", "none"],
     allowedBundlers: [],
     allowedAdapters: [],
+    allowedDatabases: [],
     supportsRouterPrompt: true,
   },
   "next:app-router": {
@@ -52,6 +56,9 @@ export const FRAMEWORK_CAPABILITIES = {
       CAPABILITIES.NEXT_FONT,
       CAPABILITIES.NEXT_IMAGE,
       CAPABILITIES.AGENT_DOCS,
+      CAPABILITIES.DATABASE,
+      CAPABILITIES.DOCKER,
+      CAPABILITIES.ROUTE_GROUPS,
     ],
     allowedArchitectures: ["feature-based", "hybrid", "none"],
     allowedStyling: ["tailwind", "none"],
@@ -61,6 +68,7 @@ export const FRAMEWORK_CAPABILITIES = {
     allowedFormatters: ["prettier", "none"],
     allowedBundlers: ["turbopack", "webpack"],
     allowedAdapters: ["node", "vercel", "cloudflare", "static"],
+    allowedDatabases: ["prisma", "none"],
     supportsRouterPrompt: false, // filesystem routing is built-in
   },
   "next:pages-router": {
@@ -74,6 +82,8 @@ export const FRAMEWORK_CAPABILITIES = {
       CAPABILITIES.NEXT_FONT,
       CAPABILITIES.NEXT_IMAGE,
       CAPABILITIES.AGENT_DOCS,
+      CAPABILITIES.DATABASE,
+      CAPABILITIES.DOCKER,
     ],
     allowedArchitectures: ["feature-based", "hybrid", "none"],
     allowedStyling: ["tailwind", "none"],
@@ -83,6 +93,7 @@ export const FRAMEWORK_CAPABILITIES = {
     allowedFormatters: ["prettier", "none"],
     allowedBundlers: ["turbopack", "webpack"],
     allowedAdapters: ["node", "vercel", "cloudflare", "static"],
+    allowedDatabases: ["prisma", "none"],
     supportsRouterPrompt: false, // filesystem routing is built-in
   },
 };
@@ -168,6 +179,22 @@ export function isOptionCompatible(framework, optionKey, optionValue) {
         return hasCapability(framework, CAPABILITIES.REACT_COMPILER);
       }
       return true;
+    case "database":
+    case "db":
+      if (!desc.allowedDatabases || desc.allowedDatabases.length === 0) {
+        return optionValue === "none" || !optionValue;
+      }
+      return desc.allowedDatabases.includes(optionValue);
+    case "docker":
+      if (optionValue === true) {
+        return hasCapability(framework, CAPABILITIES.DOCKER);
+      }
+      return true;
+    case "routeGroups":
+      if (optionValue === true) {
+        return hasCapability(framework, CAPABILITIES.ROUTE_GROUPS);
+      }
+      return true;
     default:
       return true;
   }
@@ -192,6 +219,7 @@ export function getCompatibleOptions(framework) {
     formatters: [...desc.allowedFormatters],
     bundlers: [...desc.allowedBundlers],
     adapters: [...desc.allowedAdapters],
+    databases: [...(desc.allowedDatabases || [])],
     supportsRouterPrompt: desc.supportsRouterPrompt,
   };
 }
@@ -289,6 +317,12 @@ export function isPromptVisible(framework, promptName) {
       return hasCapability(fw, CAPABILITIES.ADAPTERS);
     case "reactCompiler":
       return hasCapability(fw, CAPABILITIES.REACT_COMPILER);
+    case "database":
+      return hasCapability(fw, CAPABILITIES.DATABASE);
+    case "docker":
+      return hasCapability(fw, CAPABILITIES.DOCKER);
+    case "routeGroups":
+      return hasCapability(fw, CAPABILITIES.ROUTE_GROUPS);
     default:
       return true;
   }
@@ -334,6 +368,9 @@ export function getDefaultResponses(framework, { projectName = "my-app" } = {}) 
       stateManagement: "none",
       iconLibrary: "none",
       apiClient: "none",
+      database: "none",
+      docker: false,
+      routeGroups: false,
       linter: "eslint",
       formatter: "prettier",
       docsLanguage: "en",
@@ -355,6 +392,9 @@ export function getDefaultResponses(framework, { projectName = "my-app" } = {}) 
     stateManagement: "none",
     iconLibrary: "none",
     apiClient: "none",
+    database: "none",
+    docker: false,
+    routeGroups: false,
     linter: "eslint",
     formatter: "prettier",
     docsLanguage: "en",
@@ -389,6 +429,15 @@ export function sanitizeResponsesForFramework(framework, responses = {}) {
     if (sanitized.reactCompiler !== undefined) {
       sanitized.reactCompiler = false;
     }
+  }
+  if (!isPromptVisible(fw, "database")) {
+    sanitized.database = "none";
+  }
+  if (!isPromptVisible(fw, "docker")) {
+    sanitized.docker = false;
+  }
+  if (!isPromptVisible(fw, "routeGroups")) {
+    sanitized.routeGroups = false;
   }
 
   for (const [key, val] of Object.entries(sanitized)) {
