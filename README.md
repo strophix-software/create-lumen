@@ -1,6 +1,6 @@
 # create-lumen
 
-A scaffolder that generates production-ready React + Vite projects (feature-based, type-based, hybrid, or none).
+A scaffolder that generates production-ready **React + Vite** or **Next.js** projects (App Router / Pages Router), with a choice of architecture: feature-based, type-based, hybrid, or none.
 
 Note: this repository is the CLI scaffolder itself, not a generated app. Generated projects live in the target folder you create.
 
@@ -14,6 +14,8 @@ cd my-app
 npm run dev
 ```
 
+> The v2 line (React + Vite + Next.js, manifest v2) is available on the `beta` dist-tag while v2 is in prerelease: `npm create lumen@beta my-app`.
+
 ### Non-interactive flags
 
 Quick Setup (TypeScript + Tailwind + Feature-based + Router + ESLint + Prettier + Vitest), no prompts:
@@ -26,19 +28,27 @@ npm create lumen -- -y my-app
 npm create lumen my-app -- --yes
 ```
 
-Scaffold using a template preset (`react-ts`, `react-js`, `react-type-ts`, `react-type-js`):
+Scaffold using a template preset (`react-ts`, `react-js`, `react-type-ts`, `react-type-js`, `next-ts`, `next-js`, `next-pages-ts`, `next-pages-js`):
 
 ```bash
 npm create lumen my-app -- --template react-ts
 # or
-npm create lumen my-app -- -t react-type-js
+npm create lumen my-app -- -t next-ts
 ```
 
 Choose framework and architecture directly:
 
 ```bash
 npm create lumen my-app -- --framework react --arch none
+
+# Next.js — the router is asked interactively (App Router recommended):
+npm create lumen my-app -- -f next
+# ...or pin the variant outright:
+npm create lumen my-app -- -f next:app-router
+npm create lumen my-app -- -f next:pages-router
 ```
+
+Interactively, the framework is the first prompt (React + Vite / Next.js), followed by a router step when Next.js is selected; every later option gates on that choice.
 
 Drive scaffolding directly from a manifest file or inline JSON (manifest v2):
 
@@ -70,20 +80,25 @@ create-lumen my-app      # after npm link
 
 ## Features
 
+- **Two frameworks:** React + Vite (SPA) or Next.js (App Router / Pages Router) — selected interactively or via `-f`
 - Architecture choice: feature-based, type-based, hybrid, or none (per-framework availability)
 - TypeScript or JavaScript output
 - CSS frameworks: Tailwind CSS v4 (CSS-first `@theme`, v3 dropped) or none
+- **UI kit: shadcn/ui** (gated to Tailwind; primitives + `cn` helper land in the mapped `paths.ui`)
 - Optional state management: Zustand or Redux Toolkit
-- Optional router (React Router)
-- Optional testing: Vitest or Jest
+- Optional router (React Router — Vite only; Next.js uses filesystem routing)
+- Optional testing: Vitest or Jest (Next.js defaults to none until a Next-native overlay is verified)
+- **Next.js-native overlays:** server/client boundary demos + `no-server-imports-in-client` ESLint rule, `next/font` (Geist), `next/image`, filesystem routing examples, route handlers (`route.ts`) / API routes (`pages/api`)
+- **Next.js options:** `bundler: turbopack|webpack`, `adapter: node|vercel|cloudflare|static` (`next.config` overlays), `reactCompiler`, `linter: biome` — all validated against the capability model
 - Linting: ESLint (default), Oxlint, or Biome
 - Code formatter: Prettier or Oxfmt (chosen after the linter; `eslint-config-prettier` is auto-wired for the ESLint + Prettier combo)
-- Manifest v2: Emits a deterministic `lumen.config.json` (optional but recommended) validated against JSON Schema Draft 2020-12, including architecture validation modes and harness command configuration.
+- Manifest v2: Emits a deterministic `lumen.config.json` validated against JSON Schema Draft 2020-12, including architecture validation modes and harness command configuration.
 - Explicit path mapping: Target directories declared for `lumen-cli` code generation
 - Optional Axios setup and icon libraries
 - Auto `git init`, generated `README` (with a project description reflecting the chosen tooling) and `LICENSE`
 - `.env.example` scaffolded, and the generated `.gitignore` excludes env files (`.env`, `.env.*`) while keeping `.env.example`
 - `@/` path alias configured (`tsconfig`/`jsconfig` + Vite)
+- **Agent docs:** optional `.lumen/` context directory (project, architecture, conventions) via prompt or `--agent-docs`
 
 Your selected options are cached and offered as defaults on subsequent runs.
 
@@ -206,6 +221,9 @@ The manifest now includes:
 ### Ecosystem Documentation & Contracts
 
 - **[Documentation Index](./docs/README.md):** Complete overview of specifications, ADRs, and developer guides.
+- **[Next.js App Router Guide](./docs/next-app-router.md):** App Router scaffold, filesystem routing, route handlers, server/client boundaries, `next/font` and `next/image`.
+- **[Next.js Pages Router Guide](./docs/next-pages-router.md):** Pages Router scaffold, API routes, `_app`/`_document` wiring.
+- **[Deployment Adapters Guide](./docs/next-adapters.md):** Adapter matrix (Node, Vercel, Cloudflare, static), bundler choice and Biome setup for Next.js.
 - **[Generator Engine & Capabilities Guide (M2)](./docs/engine-capabilities.md):** Capability model, template composition, shadcn/ui on Tailwind v4, architecture presets, and Bootstrap removal.
 - **[Manifest v2 Overview](./docs/manifest-v2.md):** Specification of the nested schema, validation behavior, and the new harness and architecture validation fields.
 - **[Shared Contract: `create-lumen` ↔ `lumen-cli`](./docs/contracts/manifest-v2-contract.md):** The agreed contract for path mapping, barrel conventions, version negotiation, and the harness/configuration interface.

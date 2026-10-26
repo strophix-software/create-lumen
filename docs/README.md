@@ -7,6 +7,9 @@ Welcome to the `create-lumen` documentation. This directory contains architectur
 ## 📚 Core Architecture & Specifications
 
 - **[Generator Engine & Capabilities Guide (M2)](./engine-capabilities.md):** Complete guide to the capability declaration model, `BaseProvider` seam, template fragment composition, shadcn/ui integration with Tailwind CSS v4, `none` and `hybrid` architectures, and the migration from Bootstrap to Tailwind CSS v4.
+- **[Next.js App Router Guide (M3)](./next-app-router.md):** App Router scaffold, filesystem routing, route handlers, server/client boundaries, `next/font` and `next/image`.
+- **[Next.js Pages Router Guide (M3)](./next-pages-router.md):** Pages Router scaffold, API routes, `_app`/`_document` wiring, and parity with the App Router contract.
+- **[Next.js Deployment Adapters (M3)](./next-adapters.md):** Adapter matrix (Node, Vercel, Cloudflare, static), bundler (Turbopack/Webpack) and Biome configuration for Next.js projects.
 - **[Manifest v2 Specification](./manifest-v2.md):** Specification of the nested schema (`lumen.config.json` v2), validation behavior, path mappings, and agent integration.
 - **[Manifest & Template Contract](./contracts/manifest-v2-contract.md):** Formal versioned contract between `create-lumen` and `lumen-cli`.
 - **[Manifest-Template Contract](./manifest-template-contract.md):** Specification connecting generator outputs and template layouts.

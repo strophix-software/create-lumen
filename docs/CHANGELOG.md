@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [2.0.0-beta.1] — 2026-10-26
+
+### Added
+
+- **Next.js support — App Router + Pages Router** (#8, #18, #19) — framework selection is now the first interactive prompt, followed by a router step for Next.js; flags: `-f next` (asks router), `-f next:app-router`, `-f next:pages-router`. Repository-owned bases vendored from pinned `create-next-app@16.3.8` (dev-time only, per-base `.provenance.json`, ADR 0001) under `templates/bases/next/{app-router,pages-router}/{ts,js}`; `main()` scaffolds Next via the provider registry (`scaffoldBase`) instead of shelling out.
+- **Filesystem routing + route handlers** (#20) — App Router: `app/blog/[slug]`, `app/api/hello/route.ts`, `loading`/`not-found`; Pages Router: `pages/blog/[slug]` (getServerSideProps), `pages/api/hello`, custom 404/500. `next build` green on both routers and both languages.
+- **Server/client boundaries + `next/font` + `next/image`** (#21) — overlays under `templates/conditional/next/{server-components,font,image}`: `"use client"` boundary demos with a `no-server-imports-in-client` ESLint rule, Geist via `next/font` wired into the app layout and pages `_document`, `next/image` examples for both routers.
+- **Adapter, bundler and tooling options** (#22) — `adapter: node|vercel|cloudflare|static` and `bundler: turbopack|webpack` applied as `next.config.{ts,mjs}` overlays, `reactCompiler` flag, `linter: biome` with `biome.json`; all gated by `validateCompatibility` / `isPromptVisible`.
+- **Interactive: UI kit prompt** — shadcn/ui selectable when Tailwind is chosen, skipped otherwise; shown in the configuration summary.
+- **Interactive: agent docs prompt** — `.lumen/` agent context now selectable in the flow (previously flag-only).
+- **Presets: `next-ts`, `next-js`, `next-pages-ts`, `next-pages-js`**.
+- **Docs: Next.js guides** (#49) — `docs/next-app-router.md`, `docs/next-pages-router.md`, `docs/next-adapters.md` (deployment adapter matrix), and a Next.js section in `docs/migration/v1-to-v2.md`.
+
+### Changed
+
+- **Next.js testing default is `none`** — `create-next-app` ships no runner and no Next-specific test overlay is verified yet; Vitest and Jest remain explicitly selectable.
+- **Next providers reconciled to `next ^16`** to match the vendored bases (`^15` was stale).
+
+### Fixed
+
+- **`-f/--framework` was parsed but dropped** between `bin/cli.js` and `main()`, so the flag never reached the prompts.
+- **`computeDeps` never matched Next.js dependency paths** — it checked a `framework` string that was never set; it now reads `frameworkName`/`framework` and the Biome linter installs `@biomejs/biome`.
+- **`configureProject` overwrote Next base scripts with Vite commands** (`dev`, `build`, `preview`) — scripts are now filled only when missing, preserving base and overlay scripts.
+- **Manifest emission failed on `adapter: "none"`** — non-concrete adapters are no longer written to `framework.adapter`.
+- **`@types/node` peer conflict with Vitest** on Next.js TS bases — bumped to `^22` (Vitest requires `^22 || >=24`).
+- **Windows mojibake in interactive output** — double-encoded `•`, `—` and `←` sequences in `src/prompts.js` repaired.
+
 ## [2.0.0-alpha.2] — 2026-10-02
 
 ### Added
