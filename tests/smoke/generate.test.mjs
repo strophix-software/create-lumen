@@ -335,3 +335,70 @@ test("offline smoke: Next.js Pages Router scaffold with Jest (js) emits jest.con
   await fsp.rm(projectPath, { recursive: true, force: true });
 });
 
+test("offline smoke: Next.js App Router scaffold with Vitest, Axios, and cleanup cleans provenance (#66)", async () => {
+  const projectPath = path.join(os.tmpdir(), "lumen-smoke-next-app-vitest-axios");
+  await fsp.rm(projectPath, { recursive: true, force: true });
+  await fsp.mkdir(projectPath, { recursive: true });
+
+  const responses = {
+    projectName: "next-vitest-axios-app",
+    framework: { name: "next", variant: "app-router" },
+    frameworkName: "next",
+    frameworkVariant: "app-router",
+    architecture: "feature-based",
+    language: "ts",
+    cssFramework: "tailwind",
+    testing: "vitest",
+    apiClient: "axios",
+    bundler: "turbopack",
+    adapter: "none",
+    linter: "eslint",
+    formatter: "prettier",
+    gitInit: false,
+    readme: true,
+  };
+
+  const provider = getProvider("next", "app-router");
+  await scaffoldBase(projectPath, provider, "ts", TEMPLATES_DIR);
+  await injectConditionals(projectPath, TEMPLATES_DIR, responses, responses.architecture, responses.language);
+  await injectFormatter(projectPath, TEMPLATES_DIR, responses);
+  await cleanupBoilerplate(projectPath);
+  await copyEnvExample(projectPath, TEMPLATES_DIR, responses);
+  await emitManifest(projectPath, responses);
+
+  // 1. .provenance.json must be cleaned up
+  assert.equal(
+    await exists(path.join(projectPath, ".provenance.json")),
+    false,
+    ".provenance.json must be cleaned up by cleanupBoilerplate"
+  );
+
+  // 2. Vitest config exists without @vitejs/plugin-react
+  assert.ok(await exists(path.join(projectPath, "vitest.config.ts")), "vitest.config.ts missing");
+  const vitestCfg = await fsp.readFile(path.join(projectPath, "vitest.config.ts"), "utf8");
+  assert.equal(
+    vitestCfg.includes("@vitejs/plugin-react"),
+    false,
+    "Next.js vitest.config.ts must not contain @vitejs/plugin-react"
+  );
+  assert.ok(vitestCfg.includes("globals: true"));
+
+  // 3. Router-aware test page.test.tsx exists and App.test.tsx does not
+  assert.ok(await exists(path.join(projectPath, "src/__tests__/page.test.tsx")), "page.test.tsx missing");
+  assert.equal(await exists(path.join(projectPath, "src/__tests__/App.test.tsx")), false, "App.test.tsx should not exist");
+
+  // 4. Axios config uses process.env.NEXT_PUBLIC_API_URL
+  const axiosCfgPath = path.join(projectPath, "src/shared/lib/axios/api.config.ts");
+  assert.ok(await exists(axiosCfgPath), "axios api.config.ts missing");
+  const axiosCfg = await fsp.readFile(axiosCfgPath, "utf8");
+  assert.ok(axiosCfg.includes("process.env.NEXT_PUBLIC_API_URL"), "must use NEXT_PUBLIC_API_URL");
+  assert.equal(axiosCfg.includes("import.meta.env"), false, "must not contain import.meta.env");
+
+  // 5. .env.example contains NEXT_PUBLIC_API_URL
+  assert.ok(await exists(path.join(projectPath, ".env.example")), ".env.example missing");
+  const envContent = await fsp.readFile(path.join(projectPath, ".env.example"), "utf8");
+  assert.ok(envContent.includes("NEXT_PUBLIC_API_URL=https://api.example.com"));
+
+  await fsp.rm(projectPath, { recursive: true, force: true });
+});
+
