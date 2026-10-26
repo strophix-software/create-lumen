@@ -160,7 +160,7 @@ start with [ADR 0001: scaffolder base strategy](./adr/0001-scaffolder-base-strat
 > routing, route handlers, server/client boundaries, `next/font` +
 > `next/image`, adapters.
 
-- [ ] #8 Next.js support (epic)
+- [x] #8 Next.js support (epic) ✅ — bases vendored (`create-next-app@16.3.8`), interactive framework/router prompts, provider-based scaffold branch, `next build` green on both routers
 - [x] #18 App Router base scaffold
 - [x] #19 Pages Router variant
 - [x] #20 filesystem routing + route handlers
