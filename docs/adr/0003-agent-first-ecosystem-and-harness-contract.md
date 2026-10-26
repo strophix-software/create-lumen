@@ -68,5 +68,10 @@ Additionally, when the manifest includes `agentDocs: true` (or when the user opt
 - `create-lumen` issue: [Manifest v2.1: Add harness command matrix & architecture validation modes to schema]
 - `create-lumen` issue: [Agent Skills: Create `skills/create-lumen` package guidance]
 - `create-lumen` issue: [Scaffolder: Emit `.lumen/` agent context directory on creation]
+- `create-lumen` issue #67: [refactor(agent-docs): replace .lumen/ directory with root AGENTS.md referencing lumen.config.json (SSOT)]
+
+## Addendum (Issue #67: Single Source of Truth via AGENTS.md)
+
+To avoid duplicating JSON metadata between `lumen.config.json` and `.lumen/{project,architecture}.json`, the `.lumen/` directory was replaced with a clean, root-level `AGENTS.md`. `AGENTS.md` treats `lumen.config.json` as the Single Source of Truth (SSOT), providing AI agents with architecture rules, component taxonomy mappings (`paths.ui`, `paths.components`, and feature components), harness commands, and Next.js guidelines (RSC vs `"use client"`) without emitting duplicate metadata files.
 - `create-lumen` issue: [Contract Tests: Fixtures & drift gate for harness and validation schema]
 

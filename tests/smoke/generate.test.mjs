@@ -17,6 +17,7 @@ import { generateReadme } from "../../src/readme.js";
 import { getPkgManager } from "../../src/utils/pkg-manager.js";
 import { emitManifest } from "../../src/manifest/emit.js";
 import { parseManifest } from "../../src/manifest/schema.js";
+import { emitAgentContext } from "../../src/agent-context.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO = path.resolve(__dirname, "..", "..");
@@ -331,6 +332,27 @@ test("offline smoke: Next.js Pages Router scaffold with Jest (js) emits jest.con
   assert.ok(jestCfg.includes('import nextJest from "next/jest.js";'));
   assert.ok(await exists(path.join(projectPath, "jest.setup.js")), "jest.setup.js missing");
   assert.ok(await exists(path.join(projectPath, "src/__tests__/index.test.jsx")), "src/__tests__/index.test.jsx missing");
+
+  await fsp.rm(projectPath, { recursive: true, force: true });
+});
+
+test("offline smoke: agentDocs emits root AGENTS.md referencing lumen.config.json and no .lumen/ directory (#67)", async () => {
+  const baseApp = await ensureBase("ts");
+  const projectPath = path.join(os.tmpdir(), "lumen-smoke-agents-md");
+  const conf = {
+    ...quickSetup("ts"),
+    agentDocs: true,
+  };
+  const out = await generate(conf, baseApp, projectPath);
+  await emitAgentContext(out, conf);
+
+  assert.ok(await exists(path.join(out, "AGENTS.md")), "AGENTS.md must exist at root");
+  assert.equal(await exists(path.join(out, ".lumen")), false, ".lumen/ directory must not exist");
+
+  const content = await fsp.readFile(path.join(out, "AGENTS.md"), "utf8");
+  assert.ok(content.includes("Single Source of Truth (SSOT)"));
+  assert.ok(content.includes("Component Taxonomy"));
+  assert.ok(content.includes("lumen.config.json"));
 
   await fsp.rm(projectPath, { recursive: true, force: true });
 });
