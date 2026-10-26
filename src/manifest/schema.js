@@ -24,7 +24,7 @@ export const TOOLING_LANGUAGES = ["ts", "js"];
 export const TOOLING_LINTERS = ["eslint", "oxlint", "biome", "none"];
 export const TOOLING_FORMATTERS = ["prettier", "oxfmt", "none"];
 export const DATABASE_ORMS = ["prisma", "none"];
-export const DATABASE_PROVIDERS = ["postgresql"];
+export const DATABASE_PROVIDERS = ["postgresql", "supabase"];
 
 // ---------------------------------------------------------------------------
 // Sub-schemas

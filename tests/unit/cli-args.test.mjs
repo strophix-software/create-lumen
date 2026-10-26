@@ -244,12 +244,14 @@ test("cli-args: parses bundler, adapter, react-compiler, agent-docs, and linter 
   assert.equal(parsed2.adapter, "static");
 });
 
-test("cli-args: parses --database and --db flags", () => {
-  const p1 = parseCliArgs(["--database", "prisma"]);
+test("cli-args: parses --database, --db, and --db-provider flags", () => {
+  const p1 = parseCliArgs(["--database", "prisma", "--db-provider", "supabase"]);
   assert.equal(p1.database, "prisma");
+  assert.equal(p1.databaseProvider, "supabase");
 
-  const p2 = parseCliArgs(["--db", "none"]);
+  const p2 = parseCliArgs(["--db", "none", "--database-provider", "postgresql"]);
   assert.equal(p2.database, "none");
+  assert.equal(p2.databaseProvider, "postgresql");
 });
 
 test("cli-args: manifestToResponses maps database.orm to responses.database", () => {
@@ -279,6 +281,18 @@ test("cli-args: manifestToResponses maps database.orm to responses.database", ()
     "next-prisma-app"
   );
   assert.equal(nextWithPrisma.database, "prisma");
+  assert.equal(nextWithPrisma.databaseProvider, "postgresql");
+
+  const nextWithSupabase = manifestToResponses(
+    {
+      ...base,
+      framework: { name: "next", variant: "app-router" },
+      database: { orm: "prisma", provider: "supabase" },
+    },
+    "next-supabase-app"
+  );
+  assert.equal(nextWithSupabase.database, "prisma");
+  assert.equal(nextWithSupabase.databaseProvider, "supabase");
 
   const reactWithPrisma = manifestToResponses(
     {

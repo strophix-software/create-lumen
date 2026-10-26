@@ -63,7 +63,7 @@ async function generate(responses, baseApp, projectPath) {
   });
   await configureProject(projectPath, responses.language, responses.cssFramework);
   await cleanupBoilerplate(projectPath);
-  await copyEnvExample(projectPath, TEMPLATES_DIR);
+  await copyEnvExample(projectPath, TEMPLATES_DIR, responses);
   await emitManifest(projectPath, responses);
   if (responses.readme) await generateReadme(projectPath, "app", responses);
   await emitManifest(projectPath, responses);
@@ -360,7 +360,7 @@ test("offline smoke: Next.js App Router scaffold with Prisma ORM (#62)", async (
 
   const provider = getProvider("next", "app-router");
   await scaffoldBase(projectPath, provider, "ts", TEMPLATES_DIR);
-  await copyEnvExample(projectPath, TEMPLATES_DIR);
+  await copyEnvExample(projectPath, TEMPLATES_DIR, responses);
   await injectConditionals(projectPath, TEMPLATES_DIR, responses, responses.architecture, responses.language);
   await injectFormatter(projectPath, TEMPLATES_DIR, responses);
   await emitManifest(projectPath, responses);

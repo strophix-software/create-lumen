@@ -120,7 +120,7 @@ export function buildManifest(responses, opts = {}) {
   if (responses.database && responses.database !== "none") {
     manifest.database = {
       orm: responses.database,
-      provider: "postgresql",
+      provider: responses.databaseProvider || "postgresql",
     };
   }
   if (typeof responses.docker === "boolean") manifest.docker = responses.docker;

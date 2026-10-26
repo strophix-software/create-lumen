@@ -428,9 +428,14 @@ export function resolveFragments(responses = {}, templatesDir) {
         const envExamplePath = path.join(projectPath, ".env.example");
         const envLines = [
           "",
-          "# Database (Prisma + PostgreSQL / Supabase)",
-          'DATABASE_URL="postgresql://postgres:[YOUR-PASSWORD]@db.[YOUR-PROJECT-REF].supabase.co:5432/postgres"',
-          'DIRECT_URL="postgresql://postgres:[YOUR-PASSWORD]@db.[YOUR-PROJECT-REF].supabase.co:5432/postgres"',
+          "# Database (Prisma + PostgreSQL)",
+          "# Local development with PostgreSQL or Docker compose (docker compose up -d db):",
+          'DATABASE_URL="postgresql://postgres:postgres@localhost:5432/app?schema=public"',
+          'DIRECT_URL="postgresql://postgres:postgres@localhost:5432/app?schema=public"',
+          "",
+          "# Supabase / cloud PostgreSQL with connection pooling (Transaction mode / port 6543):",
+          '# DATABASE_URL="postgresql://postgres:[YOUR-PASSWORD]@db.[YOUR-PROJECT-REF].supabase.co:6543/postgres?pgbouncer=true"',
+          '# DIRECT_URL="postgresql://postgres:[YOUR-PASSWORD]@db.[YOUR-PROJECT-REF].supabase.co:5432/postgres"',
         ].join("\n");
         try {
           let envContent = "";

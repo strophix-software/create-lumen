@@ -105,3 +105,28 @@ test("manifest v2 M1.1: new invalid fixtures fail with expected patterns", async
     });
   }
 });
+
+test("manifest v2: parses database config with supabase provider for Next.js", () => {
+  const manifest = {
+    manifestVersion: 2,
+    framework: { name: "next", variant: "app-router" },
+    styling: { engine: "tailwind" },
+    architecture: { type: "feature-based" },
+    ui: { kit: "none" },
+    docs: { language: "en" },
+    paths: {
+      features: "src/features",
+      components: "src/components",
+      services: "src/services",
+      hooks: "src/hooks",
+      pages: "src/app",
+      ui: "src/components/ui",
+    },
+    tooling: { language: "ts", linter: "eslint", formatter: "prettier" },
+    database: { orm: "prisma", provider: "supabase" },
+  };
+
+  const parsed = parseManifest(manifest);
+  assert.equal(parsed.database.orm, "prisma");
+  assert.equal(parsed.database.provider, "supabase");
+});

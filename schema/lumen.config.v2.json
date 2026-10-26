@@ -261,7 +261,8 @@
           "default": "postgresql",
           "type": "string",
           "enum": [
-            "postgresql"
+            "postgresql",
+            "supabase"
           ]
         }
       },
