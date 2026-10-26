@@ -2,7 +2,12 @@ import { isCancel, select } from "@clack/prompts";
 import chalk from "chalk";
 import { execa } from "execa";
 
-export async function handleDevServer(pkg, projectName) {
+export async function handleDevServer(pkg, projectName, { isNonInteractive = false } = {}) {
+  if (isNonInteractive || process.env.CI || !process.stdin.isTTY) {
+    printNextSteps(projectName, pkg);
+    return;
+  }
+
   const startDev = await select({
     message: "Start the development server?",
     options: [

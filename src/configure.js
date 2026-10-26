@@ -2,9 +2,18 @@ import { promises as fsp } from "fs";
 import path from "path";
 import { readFileContent } from "@/utils/fs.js";
 import { getPathAliases, getViteAliases } from "@/aliases.js";
+import { normalizeFramework } from "@/engine/capabilities.js";
 
-export async function configureProject(projectPath, language, cssFramework) {
+export async function configureProject(projectPath, language, cssFramework, framework = "vite") {
+  const fw = normalizeFramework(framework);
   const ext = language === "ts" ? "ts" : "js";
+
+  if (fw.name === "next") {
+    // Next.js ships its own tsconfig.json with next plugins and paths.
+    // Skip Vite tsconfig.app.json and vite.config mutations.
+    await configurePackageJson(projectPath, language);
+    return;
+  }
 
   // Set up tsconfig/jsconfig with the @/* path alias
   if (language === "ts") {

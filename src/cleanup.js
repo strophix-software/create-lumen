@@ -16,10 +16,19 @@ export async function cleanupBoilerplate(projectPath, responses = {}) {
     (await fsp.stat(path.join(projectPath, "next.config.js")).catch(() => false));
 
   if (isNext) {
-    await deleteIfExists(`${projectPath}/src/app/App.tsx`);
-    await deleteIfExists(`${projectPath}/src/app/App.jsx`);
-    await deleteIfExists(`${projectPath}/src/app/hooks`);
-    await deleteIfExists(`${projectPath}/src/app/contexts`);
-    await deleteIfExists(`${projectPath}/src/app/providers`);
+    const isPagesRouter =
+      responses?.framework?.variant === "pages-router" ||
+      responses?.frameworkVariant === "pages-router" ||
+      (await fsp.stat(path.join(projectPath, "src", "pages")).catch(() => false));
+
+    if (isPagesRouter) {
+      await deleteIfExists(`${projectPath}/src/app`);
+    } else {
+      await deleteIfExists(`${projectPath}/src/app/App.tsx`);
+      await deleteIfExists(`${projectPath}/src/app/App.jsx`);
+      await deleteIfExists(`${projectPath}/src/app/hooks`);
+      await deleteIfExists(`${projectPath}/src/app/contexts`);
+      await deleteIfExists(`${projectPath}/src/app/providers`);
+    }
   }
 }

@@ -31,9 +31,16 @@ export async function injectArchitecture(
   templatesDir,
   architecture,
   language,
-  cssFramework
+  cssFramework,
+  frameworkOptions = {}
 ) {
-  const responses = { architecture, language, cssFramework };
+  const fwObj =
+    typeof frameworkOptions === "object" && frameworkOptions !== null
+      ? frameworkOptions
+      : typeof frameworkOptions === "string"
+      ? { frameworkName: frameworkOptions }
+      : {};
+  const responses = { architecture, language, cssFramework, ...fwObj };
   const allFragments = resolveFragments(responses, templatesDir);
   const archFragments = allFragments.filter(
     (f) =>

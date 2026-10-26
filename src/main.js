@@ -26,9 +26,9 @@ import { normalizeFramework } from "@/engine/capabilities.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const TEMPLATES_DIR = path.join(__dirname, "../templates");
-const CURRENT_DIR = process.cwd();
 
-export function resolveProjectName({ quickSetup = false, projectName: nameArg, cwd = CURRENT_DIR, rawArgs } = {}) {
+export function resolveProjectName({ quickSetup = false, projectName: nameArg, cwd, rawArgs } = {}) {
+  const currentDir = cwd || process.cwd();
   const cli = parseCliArgs(rawArgs || process.argv.slice(2));
   const cliArg = nameArg || cli.projectName || null;
 
@@ -37,7 +37,7 @@ export function resolveProjectName({ quickSetup = false, projectName: nameArg, c
   }
 
   if (quickSetup || cli.quickSetup || cli.manifest || cli.template) {
-    const defaultName = path.basename(cwd).trim() || "my-app";
+    const defaultName = path.basename(currentDir).trim() || "my-app";
     return defaultName === "." ? "my-app" : defaultName;
   }
 
@@ -52,16 +52,24 @@ export async function main(options = {}) {
     template: templateName,
     framework: frameworkArg,
     arch: archArg,
+    database: databaseArg,
+    docker: dockerArg,
+    routeGroups: routeGroupsArg,
+    bundler: bundlerArg,
+    adapter: adapterArg,
+    reactCompiler: reactCompilerArg,
+    agentDocs: agentDocsArg,
   } = options;
   const pkg = getPkgManager();
 
   const isNonInteractive = Boolean(quickSetup || manifestSource || templateName);
+  const currentDir = options.cwd || process.cwd();
 
   // 1. Project name
   let projectName = resolveProjectName({
     quickSetup: isNonInteractive,
     projectName: nameArg,
-    cwd: CURRENT_DIR,
+    cwd: currentDir,
   });
 
   if (projectName) {
@@ -83,7 +91,7 @@ export async function main(options = {}) {
   // 3. Collect user preferences (interactive or non-interactive)
   let responses;
   if (manifestSource) {
-    const manifestObj = loadManifestSource(manifestSource, CURRENT_DIR);
+    const manifestObj = loadManifestSource(manifestSource, currentDir);
     responses = manifestToResponses(manifestObj, projectName);
   } else if (templateName) {
     const preset = PRESETS[templateName];
@@ -100,7 +108,16 @@ export async function main(options = {}) {
     responses = await getUserInputs(projectName, { quickSetup, initialArch: archArg, framework: frameworkArg });
   }
 
-  const projectPath = path.resolve(CURRENT_DIR, projectName);
+  // Overlay explicit CLI flags if provided
+  if (databaseArg) responses.database = databaseArg;
+  if (dockerArg) responses.docker = true;
+  if (routeGroupsArg) responses.routeGroups = true;
+  if (bundlerArg) responses.bundler = bundlerArg;
+  if (adapterArg) responses.adapter = adapterArg;
+  if (reactCompilerArg !== null && reactCompilerArg !== undefined) responses.reactCompiler = reactCompilerArg;
+  if (agentDocsArg !== null && agentDocsArg !== undefined) responses.agentDocs = agentDocsArg;
+
+  const projectPath = path.resolve(currentDir, projectName);
 
   // 4. Scaffold the base project (provider-owned bases; Vite shells out, Next copies)
   const fw = normalizeFramework(
@@ -168,7 +185,8 @@ export async function main(options = {}) {
       TEMPLATES_DIR,
       responses.architecture,
       responses.language,
-      responses.cssFramework
+      responses.cssFramework,
+      responses.framework || { name: responses.frameworkName, variant: responses.frameworkVariant }
     );
     archSpin.stop(chalk.green("Architecture scaffolding complete."));
   } catch (err) {
@@ -233,6 +251,7 @@ export async function main(options = {}) {
       architecture: responses.architecture,
       ext: responses.language === "ts" ? "tsx" : "jsx",
       pkg,
+      framework: responses.framework || { name: responses.frameworkName, variant: responses.frameworkVariant },
     });
     if (responses.cssFramework !== "none") {
       cssSpin.stop(chalk.green(`${cssLabel} setup complete.`));
@@ -246,7 +265,12 @@ export async function main(options = {}) {
   const configSpin = spinner();
   configSpin.start("Configuring project...");
   try {
-    await configureProject(projectPath, responses.language, responses.cssFramework);
+    await configureProject(
+      projectPath,
+      responses.language,
+      responses.cssFramework,
+      responses.framework || { name: responses.frameworkName, variant: responses.frameworkVariant }
+    );
     configSpin.stop(chalk.green("Project configured."));
   } catch (err) {
     configSpin.stop(chalk.red("Failed to configure project."));
@@ -254,7 +278,7 @@ export async function main(options = {}) {
   }
 
   // 12. Cleanup boilerplate
-  await cleanupBoilerplate(projectPath);
+  await cleanupBoilerplate(projectPath, responses);
 
   // 12.5 Copy .env.example into the project
   await copyEnvExample(projectPath, TEMPLATES_DIR, responses);
@@ -317,5 +341,5 @@ export async function main(options = {}) {
   );
 
   // 14. Offer dev server
-  await handleDevServer(pkg, projectName);
+  await handleDevServer(pkg, projectName, { isNonInteractive });
 }

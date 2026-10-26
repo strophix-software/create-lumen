@@ -17,7 +17,6 @@ export async function setupCssFramework({
   pkg: _pkg,
   framework = "vite",
 }) {
-  process.chdir(projectPath);
   const fw = normalizeFramework(framework);
   const isFilesystemRouted = hasCapability(fw, CAPABILITIES.FILESYSTEM_ROUTING);
   const cssDir = path.join(templatesDir, "css");
