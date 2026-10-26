@@ -409,3 +409,88 @@ test("composition: React/Vite with Jest still emits babel.config.cjs and standar
     await fsp.rm(dir, { recursive: true, force: true });
   }
 });
+
+test("composition: Next.js with Prisma ORM scaffolds schema, client, seed, scripts, and env", async () => {
+  const dir = await fsp.mkdtemp(path.join(os.tmpdir(), "lumen-next-prisma-ts-"));
+  try {
+    await fsp.writeFile(
+      path.join(dir, "package.json"),
+      JSON.stringify({ name: "next-prisma-app", scripts: {} }, null, 2)
+    );
+    await fsp.writeFile(
+      path.join(dir, ".env.example"),
+      "VITE_API_URL=https://api.example.com\n"
+    );
+
+    const responses = {
+      frameworkName: "next",
+      frameworkVariant: "app-router",
+      architecture: "feature-based",
+      language: "ts",
+      database: "prisma",
+    };
+    const fragments = resolveFragments(responses, TEMPLATES_DIR);
+    const dbFrag = fragments.find((f) => f.id === "tooling:database:prisma");
+    assert.ok(dbFrag, "database fragment must be resolved");
+    assert.equal(dbFrag.category, "database");
+
+    await applyFragments(dir, fragments, { templatesDir: TEMPLATES_DIR, responses, language: "ts" });
+
+    // 1. prisma/schema.prisma exists and contains postgresql provider + directUrl
+    const schemaContent = await fsp.readFile(path.join(dir, "prisma", "schema.prisma"), "utf8");
+    assert.ok(schemaContent.includes('provider  = "postgresql"'));
+    assert.ok(schemaContent.includes('url       = env("DATABASE_URL")'));
+    assert.ok(schemaContent.includes('directUrl = env("DIRECT_URL")'));
+
+    // 2. src/lib/db.ts exists and caches globalThis.prisma
+    const dbClientContent = await fsp.readFile(path.join(dir, "src", "lib", "db.ts"), "utf8");
+    assert.ok(dbClientContent.includes("globalForPrisma"));
+    assert.ok(dbClientContent.includes("new PrismaClient"));
+
+    // 3. prisma/seed.ts exists
+    assert.ok(await fsp.stat(path.join(dir, "prisma", "seed.ts")).catch(() => false));
+
+    // 4. package.json scripts and seed config
+    const pkg = JSON.parse(await fsp.readFile(path.join(dir, "package.json"), "utf8"));
+    assert.equal(pkg.scripts["db:generate"], "prisma generate");
+    assert.equal(pkg.scripts["db:push"], "prisma db push");
+    assert.equal(pkg.scripts["db:seed"], "prisma db seed");
+    assert.equal(pkg.scripts["db:studio"], "prisma studio");
+    assert.equal(pkg.prisma?.seed, "tsx prisma/seed.ts");
+
+    // 5. .env.example contains DATABASE_URL and DIRECT_URL
+    const envContent = await fsp.readFile(path.join(dir, ".env.example"), "utf8");
+    assert.ok(envContent.includes("DATABASE_URL="));
+    assert.ok(envContent.includes("DIRECT_URL="));
+  } finally {
+    await fsp.rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("composition: Next.js with Prisma ORM in JS scaffolds db.js and seed.js", async () => {
+  const dir = await fsp.mkdtemp(path.join(os.tmpdir(), "lumen-next-prisma-js-"));
+  try {
+    await fsp.writeFile(
+      path.join(dir, "package.json"),
+      JSON.stringify({ name: "next-prisma-js-app", scripts: {} }, null, 2)
+    );
+
+    const responses = {
+      frameworkName: "next",
+      frameworkVariant: "pages-router",
+      architecture: "feature-based",
+      language: "js",
+      database: "prisma",
+    };
+    const fragments = resolveFragments(responses, TEMPLATES_DIR);
+    await applyFragments(dir, fragments, { templatesDir: TEMPLATES_DIR, responses, language: "js" });
+
+    assert.ok(await fsp.stat(path.join(dir, "prisma", "seed.js")).catch(() => false));
+    assert.ok(await fsp.stat(path.join(dir, "src", "lib", "db.js")).catch(() => false));
+
+    const pkg = JSON.parse(await fsp.readFile(path.join(dir, "package.json"), "utf8"));
+    assert.equal(pkg.prisma?.seed, "node prisma/seed.js");
+  } finally {
+    await fsp.rm(dir, { recursive: true, force: true });
+  }
+});

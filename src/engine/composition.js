@@ -41,6 +41,7 @@ export const TOOLING_ORDER = [
   "router",
   "icons",
   "api",
+  "database",
   "testing",
   "linter",
   "feature-script",
@@ -316,6 +317,84 @@ export function resolveFragments(responses = {}, templatesDir) {
       id: `tooling:api:${responses.apiClient}`,
       sourceDir: apiDir,
       targetDir: "src",
+    });
+  }
+
+  // 5.45 Database (Prisma)
+  if (responses.database === "prisma") {
+    fragments.push({
+      scope: FRAGMENT_SCOPES.TOOLING,
+      category: "database",
+      id: "tooling:database:prisma",
+      scripts: {
+        "db:generate": "prisma generate",
+        "db:push": "prisma db push",
+        "db:seed": "prisma db seed",
+        "db:studio": "prisma studio",
+      },
+      action: async ({ projectPath, templatesDir: tDir }) => {
+        const prismaTplDir = path.join(tDir, "conditional", "database", "prisma");
+        const prismaDir = path.join(projectPath, "prisma");
+        await fsp.mkdir(prismaDir, { recursive: true });
+
+        // Copy schema.prisma
+        const schemaSrc = path.join(prismaTplDir, "schema.prisma");
+        const schemaDest = path.join(prismaDir, "schema.prisma");
+        try {
+          await fsp.access(schemaSrc);
+          await fsp.copyFile(schemaSrc, schemaDest);
+        } catch {}
+
+        // Copy seed file: prisma/seed.ts or prisma/seed.js
+        const seedFileName = language === "ts" ? "seed.ts" : "seed.js";
+        const seedSrc = path.join(prismaTplDir, seedFileName);
+        const seedDest = path.join(prismaDir, seedFileName);
+        try {
+          await fsp.access(seedSrc);
+          await fsp.copyFile(seedSrc, seedDest);
+        } catch {}
+
+        // Copy client singleton: src/lib/db.ts or src/lib/db.js
+        const libDir = path.join(projectPath, "src", "lib");
+        await fsp.mkdir(libDir, { recursive: true });
+        const dbFileName = language === "ts" ? "db.ts" : "db.js";
+        const dbSrc = path.join(prismaTplDir, dbFileName);
+        const dbDest = path.join(libDir, dbFileName);
+        try {
+          await fsp.access(dbSrc);
+          await fsp.copyFile(dbSrc, dbDest);
+        } catch {}
+
+        // Configure prisma.seed in package.json
+        const pkgPath = path.join(projectPath, "package.json");
+        try {
+          const content = await fsp.readFile(pkgPath, "utf8");
+          const pkg = JSON.parse(content);
+          pkg.prisma = {
+            seed: language === "ts" ? "tsx prisma/seed.ts" : "node prisma/seed.js",
+          };
+          await fsp.writeFile(pkgPath, JSON.stringify(pkg, null, 2) + "\n", "utf8");
+        } catch {}
+
+        // Append DATABASE_URL and DIRECT_URL to .env.example
+        const envExamplePath = path.join(projectPath, ".env.example");
+        const envLines = [
+          "",
+          "# Database (Prisma + PostgreSQL / Supabase)",
+          'DATABASE_URL="postgresql://postgres:[YOUR-PASSWORD]@db.[YOUR-PROJECT-REF].supabase.co:5432/postgres"',
+          'DIRECT_URL="postgresql://postgres:[YOUR-PASSWORD]@db.[YOUR-PROJECT-REF].supabase.co:5432/postgres"',
+        ].join("\n");
+        try {
+          let envContent = "";
+          try {
+            envContent = await fsp.readFile(envExamplePath, "utf8");
+          } catch {}
+          if (!envContent.includes("DATABASE_URL")) {
+            envContent = envContent.trimEnd() + "\n" + envLines.trimStart() + "\n";
+            await writeFileRecursive(envExamplePath, envContent);
+          }
+        } catch {}
+      },
     });
   }
 

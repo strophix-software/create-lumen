@@ -248,3 +248,18 @@ test("snapshot comparison before/after batching: flattened devDepBatches exactly
     }
   }
 });
+
+test("prisma: @prisma/client in deps, prisma in devDeps, and tsx when language is ts", () => {
+  const tsPrisma = cellDeps({ database: "prisma", language: "ts" });
+  has(tsPrisma.deps, "@prisma/client");
+  has(tsPrisma.devDeps, "prisma", "tsx");
+
+  const jsPrisma = cellDeps({ database: "prisma", language: "js" });
+  has(jsPrisma.deps, "@prisma/client");
+  has(jsPrisma.devDeps, "prisma");
+  lacks(jsPrisma.devDeps, "tsx");
+
+  const nonePrisma = cellDeps({ database: "none" });
+  lacks(nonePrisma.deps, "@prisma/client");
+  lacks(nonePrisma.devDeps, "prisma", "tsx");
+});

@@ -243,3 +243,50 @@ test("cli-args: parses bundler, adapter, react-compiler, agent-docs, and linter 
   assert.equal(parsed2.bundler, "webpack");
   assert.equal(parsed2.adapter, "static");
 });
+
+test("cli-args: parses --database and --db flags", () => {
+  const p1 = parseCliArgs(["--database", "prisma"]);
+  assert.equal(p1.database, "prisma");
+
+  const p2 = parseCliArgs(["--db", "none"]);
+  assert.equal(p2.database, "none");
+});
+
+test("cli-args: manifestToResponses maps database.orm to responses.database", () => {
+  const base = {
+    manifestVersion: 2,
+    styling: { engine: "tailwind" },
+    architecture: { type: "feature-based" },
+    ui: { kit: "none" },
+    docs: { language: "en" },
+    paths: {
+      features: "src/features",
+      components: "src/components",
+      services: "src/services",
+      hooks: "src/hooks",
+      pages: "src/pages",
+      ui: "src/components/ui",
+    },
+    tooling: { language: "ts", linter: "eslint", formatter: "prettier" },
+  };
+
+  const nextWithPrisma = manifestToResponses(
+    {
+      ...base,
+      framework: { name: "next", variant: "app-router" },
+      database: { orm: "prisma", provider: "postgresql" },
+    },
+    "next-prisma-app"
+  );
+  assert.equal(nextWithPrisma.database, "prisma");
+
+  const reactWithPrisma = manifestToResponses(
+    {
+      ...base,
+      framework: { name: "react", variant: "vite" },
+      database: { orm: "prisma", provider: "postgresql" },
+    },
+    "react-app"
+  );
+  assert.equal(reactWithPrisma.database, "none");
+});

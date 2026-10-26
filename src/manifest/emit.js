@@ -117,6 +117,14 @@ export function buildManifest(responses, opts = {}) {
   };
 
   // Optional cross-cutting flags — only include if explicitly set (keeps minimal manifest byte-stable)
+  if (responses.database && responses.database !== "none") {
+    manifest.database = {
+      orm: responses.database,
+      provider: "postgresql",
+    };
+  }
+  if (typeof responses.docker === "boolean") manifest.docker = responses.docker;
+  if (typeof responses.routeGroups === "boolean") manifest.routeGroups = responses.routeGroups;
   if (typeof responses.reactCompiler === "boolean") manifest.reactCompiler = responses.reactCompiler;
   if (typeof responses.agentDocs === "boolean") manifest.agentDocs = responses.agentDocs;
 
@@ -133,6 +141,9 @@ export function buildManifest(responses, opts = {}) {
     "docs",
     "paths",
     "tooling",
+    "database",
+    "docker",
+    "routeGroups",
     "reactCompiler",
     "agentDocs",
   ];

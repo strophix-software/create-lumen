@@ -1,4 +1,4 @@
-﻿import { isCancel, note, select } from "@clack/prompts";
+import { isCancel, note, select } from "@clack/prompts";
 import chalk from "chalk";
 import { configExists, loadConfig, saveConfig } from "@/config-cache.js";
 import {
@@ -70,6 +70,9 @@ export function formatConfig(responses) {
   }
   if (responses.adapter && responses.adapter !== "none") {
     lines.push(`• ${chalk.bold("Adapter:")} ${chalk.cyan(responses.adapter)}`);
+  }
+  if (responses.database && responses.database !== "none") {
+    lines.push(`• ${chalk.bold("Database:")} ${chalk.cyan(responses.database === "prisma" ? "Prisma ORM" : responses.database)}`);
   }
   if (responses.reactCompiler !== undefined) {
     lines.push(`• ${chalk.bold("React Compiler:")} ${responses.reactCompiler ? chalk.green("Yes") : chalk.red("No")}`);
@@ -457,6 +460,24 @@ export async function getUserInputs(
       defaultInitial: "none",
     },
     {
+      id: "database",
+      skip: () => !isPromptVisible(framework, "database"),
+      onSkip: (ans) => {
+        ans.database = "none";
+      },
+      message: "Which database ORM do you want to use?",
+      getOptions: () =>
+        filterCompatibleChoices(framework, "database", [
+          {
+            label: "Prisma ORM",
+            value: "prisma",
+            hint: "PostgreSQL schema, client singleton, seed script",
+          },
+          { label: "None", value: "none" },
+        ]),
+      defaultInitial: "none",
+    },
+    {
       id: "reactCompiler",
       skip: () => !isPromptVisible(framework, "reactCompiler"),
       onSkip: (ans) => {
@@ -620,6 +641,7 @@ export async function getUserInputs(
     quickSetup: _quickSetup,
     bundler,
     adapter,
+    database,
     reactCompiler,
     agentDocs,
     ...picked
@@ -637,6 +659,9 @@ export async function getUserInputs(
   }
   if (adapter !== undefined && adapter !== "none") {
     finalResponses.adapter = adapter;
+  }
+  if (database !== undefined && database !== "none") {
+    finalResponses.database = database;
   }
   if (reactCompiler !== undefined) {
     finalResponses.reactCompiler = reactCompiler;

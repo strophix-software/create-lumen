@@ -335,3 +335,67 @@ test("offline smoke: Next.js Pages Router scaffold with Jest (js) emits jest.con
   await fsp.rm(projectPath, { recursive: true, force: true });
 });
 
+test("offline smoke: Next.js App Router scaffold with Prisma ORM (#62)", async () => {
+  const projectPath = path.join(os.tmpdir(), "lumen-smoke-next-prisma");
+  await fsp.rm(projectPath, { recursive: true, force: true });
+  await fsp.mkdir(projectPath, { recursive: true });
+
+  const responses = {
+    projectName: "next-prisma-app",
+    framework: { name: "next", variant: "app-router" },
+    frameworkName: "next",
+    frameworkVariant: "app-router",
+    architecture: "feature-based",
+    language: "ts",
+    cssFramework: "tailwind",
+    database: "prisma",
+    bundler: "turbopack",
+    adapter: "none",
+    linter: "eslint",
+    formatter: "prettier",
+    gitInit: false,
+    readme: true,
+  };
+
+  const provider = getProvider("next", "app-router");
+  await scaffoldBase(projectPath, provider, "ts", TEMPLATES_DIR);
+  await copyEnvExample(projectPath, TEMPLATES_DIR);
+  await injectConditionals(projectPath, TEMPLATES_DIR, responses, responses.architecture, responses.language);
+  await injectFormatter(projectPath, TEMPLATES_DIR, responses);
+  await emitManifest(projectPath, responses);
+
+  // 1. Zero Babel
+  assert.equal(await exists(path.join(projectPath, "babel.config.cjs")), false);
+  assert.equal(await exists(path.join(projectPath, ".babelrc")), false);
+
+  // 2. Prisma schema exists
+  assert.ok(await exists(path.join(projectPath, "prisma/schema.prisma")), "prisma/schema.prisma missing");
+  const schema = await fsp.readFile(path.join(projectPath, "prisma/schema.prisma"), "utf8");
+  assert.ok(schema.includes('provider  = "postgresql"'));
+  assert.ok(schema.includes('directUrl = env("DIRECT_URL")'));
+
+  // 3. Database client and seed files exist
+  assert.ok(await exists(path.join(projectPath, "src/lib/db.ts")), "src/lib/db.ts missing");
+  assert.ok(await exists(path.join(projectPath, "prisma/seed.ts")), "prisma/seed.ts missing");
+
+  // 4. package.json scripts and seed configuration
+  const pkgJson = JSON.parse(await fsp.readFile(path.join(projectPath, "package.json"), "utf8"));
+  assert.equal(pkgJson.scripts["db:generate"], "prisma generate");
+  assert.equal(pkgJson.scripts["db:push"], "prisma db push");
+  assert.equal(pkgJson.scripts["db:seed"], "prisma db seed");
+  assert.equal(pkgJson.scripts["db:studio"], "prisma studio");
+  assert.equal(pkgJson.prisma?.seed, "tsx prisma/seed.ts");
+
+  // 5. .env.example contains PostgreSQL / Supabase URLs
+  const envContent = await fsp.readFile(path.join(projectPath, ".env.example"), "utf8");
+  assert.ok(envContent.includes("DATABASE_URL="));
+  assert.ok(envContent.includes("DIRECT_URL="));
+
+  // 6. lumen.config.json validates with database config
+  const manifest = parseManifest(JSON.parse(await fsp.readFile(path.join(projectPath, "lumen.config.json"), "utf8")));
+  assert.equal(manifest.database?.orm, "prisma");
+  assert.equal(manifest.database?.provider, "postgresql");
+
+  await fsp.rm(projectPath, { recursive: true, force: true });
+});
+

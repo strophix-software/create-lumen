@@ -49,6 +49,7 @@ export function computeDeps(responses) {
   );
   const fwName = fw.name;
   const cssDevDeps = [];
+  const databaseDevDeps = [];
   const testingDevDeps = [];
   const linterDevDeps = [];
   const formatterDevDeps = [];
@@ -85,6 +86,15 @@ export function computeDeps(responses) {
   // API Client
   if (responses.apiClient === "axios") {
     deps.push("axios");
+  }
+
+  // Database
+  if (responses.database === "prisma") {
+    deps.push("@prisma/client");
+    databaseDevDeps.push("prisma");
+    if (responses.language === "ts") {
+      databaseDevDeps.push("tsx");
+    }
   }
 
   // Testing
@@ -152,6 +162,7 @@ export function computeDeps(responses) {
 
   const devDepBatches = [
     cssDevDeps,
+    databaseDevDeps,
     testingDevDeps,
     linterDevDeps,
     formatterDevDeps,
