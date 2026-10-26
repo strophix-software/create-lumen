@@ -177,6 +177,9 @@ export function resolveFragments(responses = {}, templatesDir) {
     sourceDir: archSrcDir,
     targetDir: "src",
     action: async ({ projectPath }) => {
+      if (fw.name === "next") {
+        return;
+      }
       // Copy architecture main entry
       try {
         await fsp.access(archMainSrc);
@@ -223,6 +226,7 @@ export function resolveFragments(responses = {}, templatesDir) {
       sourceDir: path.join(templatesDir, "conditional", "state", "redux", architecture, "src"),
       targetDir: "src",
       action: async ({ projectPath }) => {
+        if (fw.name === "next") return;
         await updateMainWithProvider(projectPath, "redux", architecture, ext);
       },
     });
@@ -319,6 +323,28 @@ export function resolveFragments(responses = {}, templatesDir) {
       id: `tooling:api:${responses.apiClient}`,
       sourceDir: apiDir,
       targetDir: "src",
+      action: async ({ projectPath }) => {
+        if (fw.name === "next") {
+          const configCandidates = [
+            path.join(projectPath, "src", "config", `axios.config.${extConfig}`),
+            path.join(projectPath, "src", "shared", "lib", "axios", `api.config.${extConfig}`),
+            path.join(projectPath, "src", "config", `api.config.${extConfig}`),
+            path.join(projectPath, "src", "shared", "api", `api.config.${extConfig}`),
+          ];
+          for (const cfgPath of configCandidates) {
+            try {
+              let content = await fsp.readFile(cfgPath, "utf8");
+              if (content.includes("import.meta.env.VITE_API_URL")) {
+                content = content.replace(
+                  /import\.meta\.env\.VITE_API_URL/g,
+                  "process.env.NEXT_PUBLIC_API_URL"
+                );
+                await fsp.writeFile(cfgPath, content, "utf8");
+              }
+            } catch {}
+          }
+        }
+      },
     });
   }
 
@@ -422,6 +448,12 @@ export function resolveFragments(responses = {}, templatesDir) {
           try {
             await fsp.access(configSrc);
             await fsp.copyFile(configSrc, path.join(projectPath, `jest.config.${nextConfigExt}`));
+          } catch {}
+        } else if (testingFramework === "vitest" && fw.name === "next") {
+          const configSrc = path.join(testingDir, "next", `vitest.config.${extConfig}`);
+          try {
+            await fsp.access(configSrc);
+            await fsp.copyFile(configSrc, path.join(projectPath, `vitest.config.${extConfig}`));
           } catch {}
         } else {
           const configSrc = path.join(testingDir, `${testingFramework}.config.${extConfig}`);

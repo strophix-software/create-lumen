@@ -419,7 +419,15 @@ export async function getUserInputs(
         { label: "Jest", value: "jest" },
         { label: "None", value: "none" },
       ],
-      defaultInitial: "vitest",
+      defaultInitial: (ans) => {
+        const fw = normalizeFramework(
+          ans.framework || {
+            name: ans.frameworkName,
+            variant: ans.frameworkVariant,
+          }
+        );
+        return fw.name === "next" ? "none" : "vitest";
+      },
     },
     {
       id: "router",

@@ -599,6 +599,47 @@ test("composition: Next.js App Router with routeGroups emits route group layouts
   }
 });
 
+test("composition: Next.js with Vitest emits clean vitest.config without @vitejs/plugin-react (#66)", async () => {
+  const dir = await fsp.mkdtemp(path.join(os.tmpdir(), "lumen-next-vitest-"));
+  try {
+    await fsp.writeFile(
+      path.join(dir, "package.json"),
+      JSON.stringify({ name: "app", scripts: {} }, null, 2)
+    );
+
+    const responses = {
+      frameworkName: "next",
+      frameworkVariant: "app-router",
+      architecture: "feature-based",
+      language: "ts",
+      testing: "vitest",
+    };
+    const fragments = resolveFragments(responses, TEMPLATES_DIR);
+    const vitestFrag = fragments.find((f) => f.id === "tooling:testing:vitest");
+    assert.ok(vitestFrag, "Vitest fragment present");
+    assert.equal(vitestFrag.scripts.test, "vitest");
+    assert.equal(vitestFrag.scripts["test:run"], "vitest run");
+
+    await applyFragments(dir, fragments, { templatesDir: TEMPLATES_DIR, responses, language: "ts" });
+
+    // 1. vitest.config.ts must not contain @vitejs/plugin-react
+    const vitestCfg = await fsp.readFile(path.join(dir, "vitest.config.ts"), "utf8");
+    assert.ok(!vitestCfg.includes("@vitejs/plugin-react"), "must not include @vitejs/plugin-react");
+    assert.ok(vitestCfg.includes("globals: true"));
+    assert.ok(vitestCfg.includes("setup.ts"));
+
+    // 2. Router-aware test file page.test.tsx must exist; App.test.tsx must not
+    assert.ok(await fsp.stat(path.join(dir, "src", "__tests__", "page.test.tsx")).catch(() => false));
+    assert.equal(
+      await fsp.stat(path.join(dir, "src", "__tests__", "App.test.tsx")).catch(() => false),
+      false,
+      "App.test.tsx must not exist for Next.js App Router"
+    );
+  } finally {
+    await fsp.rm(dir, { recursive: true, force: true });
+  }
+});
+
 test("composition: Next.js App Router with routeGroups emits route group layouts and middleware (js)", async () => {
   const dir = await fsp.mkdtemp(path.join(os.tmpdir(), "lumen-next-routegroups-js-"));
   try {
@@ -636,6 +677,62 @@ test("composition: Next.js App Router with routeGroups emits route group layouts
     assert.ok(await fsp.stat(middlewarePath).catch(() => false));
     const middlewareContent = await fsp.readFile(middlewarePath, "utf8");
     assert.ok(middlewareContent.includes("export function middleware"));
+  } finally {
+    await fsp.rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("composition: Next.js with Axios/Fetch adapts env var to NEXT_PUBLIC_API_URL (#66)", async () => {
+  const dir = await fsp.mkdtemp(path.join(os.tmpdir(), "lumen-next-api-"));
+  try {
+    await fsp.writeFile(
+      path.join(dir, "package.json"),
+      JSON.stringify({ name: "app", scripts: {} }, null, 2)
+    );
+
+    const responses = {
+      frameworkName: "next",
+      frameworkVariant: "app-router",
+      architecture: "feature-based",
+      language: "ts",
+      apiClient: "axios",
+    };
+    const fragments = resolveFragments(responses, TEMPLATES_DIR);
+    await applyFragments(dir, fragments, { templatesDir: TEMPLATES_DIR, responses, language: "ts" });
+
+    const cfgPath = path.join(dir, "src", "shared", "lib", "axios", "api.config.ts");
+    assert.ok(await fsp.stat(cfgPath).catch(() => false), "api.config.ts should exist");
+    const cfg = await fsp.readFile(cfgPath, "utf8");
+    assert.ok(cfg.includes("process.env.NEXT_PUBLIC_API_URL"), "must use process.env.NEXT_PUBLIC_API_URL");
+    assert.ok(!cfg.includes("import.meta.env.VITE_API_URL"), "must not use import.meta.env.VITE_API_URL");
+  } finally {
+    await fsp.rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("composition: Next.js with Redux applies without touching main.tsx (#66)", async () => {
+  const dir = await fsp.mkdtemp(path.join(os.tmpdir(), "lumen-next-redux-"));
+  try {
+    await fsp.writeFile(
+      path.join(dir, "package.json"),
+      JSON.stringify({ name: "app", scripts: {} }, null, 2)
+    );
+
+    const responses = {
+      frameworkName: "next",
+      frameworkVariant: "app-router",
+      architecture: "feature-based",
+      language: "ts",
+      stateManagement: "redux",
+    };
+    const fragments = resolveFragments(responses, TEMPLATES_DIR);
+    await applyFragments(dir, fragments, { templatesDir: TEMPLATES_DIR, responses, language: "ts" });
+
+    assert.equal(
+      await fsp.stat(path.join(dir, "src", "main.tsx")).catch(() => false),
+      false,
+      "main.tsx must not be created or touched for Next.js"
+    );
   } finally {
     await fsp.rm(dir, { recursive: true, force: true });
   }

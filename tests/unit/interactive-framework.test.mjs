@@ -273,3 +273,41 @@ test("defaults: Next.js does not default to vitest", () => {
   assert.equal(getDefaultResponses("next:pages-router", {}).testing, "none");
   assert.equal(getDefaultResponses("react", {}).testing, "vitest");
 });
+
+test("prompts: testing prompt defaults to none for Next.js and vitest for React (#66)", async () => {
+  let promptInitialTestingNext;
+  await getUserInputs("app-next-testing", {
+    quickSetup: false,
+    framework: "next",
+    configExistsFn: async () => false,
+    saveConfigFn: async () => {},
+    selectFn: async ({ message, initialValue, options }) => {
+      if (message.includes("Quick Setup?")) return false;
+      if (message.includes("Which testing framework")) {
+        promptInitialTestingNext = initialValue;
+      }
+      if (message.includes("Proceed with project generation?")) return true;
+      return options[0].value;
+    },
+    noteFn: () => {},
+  });
+  assert.equal(promptInitialTestingNext, "none", "Next.js testing prompt should default initial to 'none'");
+
+  let promptInitialTestingReact;
+  await getUserInputs("app-react-testing", {
+    quickSetup: false,
+    framework: "react",
+    configExistsFn: async () => false,
+    saveConfigFn: async () => {},
+    selectFn: async ({ message, initialValue, options }) => {
+      if (message.includes("Quick Setup?")) return false;
+      if (message.includes("Which testing framework")) {
+        promptInitialTestingReact = initialValue;
+      }
+      if (message.includes("Proceed with project generation?")) return true;
+      return options[0].value;
+    },
+    noteFn: () => {},
+  });
+  assert.equal(promptInitialTestingReact, "vitest", "React testing prompt should default initial to 'vitest'");
+});

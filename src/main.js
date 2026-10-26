@@ -257,7 +257,7 @@ export async function main(options = {}) {
   await cleanupBoilerplate(projectPath);
 
   // 12.5 Copy .env.example into the project
-  await copyEnvExample(projectPath, TEMPLATES_DIR);
+  await copyEnvExample(projectPath, TEMPLATES_DIR, responses);
 
   // 12.6 Emit lumen.config.json (manifest v2) — byte-deterministic, Zod-validated
   const manifestSpin = spinner();
