@@ -335,11 +335,20 @@ export function resolveFragments(responses = {}, templatesDir) {
       scripts: testScripts,
       action: async ({ projectPath }) => {
         // Config file to project root
-        const configSrc = path.join(testingDir, `${testingFramework}.config.${extConfig}`);
-        try {
-          await fsp.access(configSrc);
-          await fsp.copyFile(configSrc, path.join(projectPath, `${testingFramework}.config.${extConfig}`));
-        } catch {}
+        if (testingFramework === "jest" && fw.name === "next") {
+          const nextConfigExt = language === "ts" ? "ts" : "mjs";
+          const configSrc = path.join(testingDir, "next", `jest.config.${nextConfigExt}`);
+          try {
+            await fsp.access(configSrc);
+            await fsp.copyFile(configSrc, path.join(projectPath, `jest.config.${nextConfigExt}`));
+          } catch {}
+        } else {
+          const configSrc = path.join(testingDir, `${testingFramework}.config.${extConfig}`);
+          try {
+            await fsp.access(configSrc);
+            await fsp.copyFile(configSrc, path.join(projectPath, `${testingFramework}.config.${extConfig}`));
+          } catch {}
+        }
 
         // Setup file to src/test/setup.*
         const setupSrc = path.join(testingDir, `src/test/setup.${extConfig}`);
@@ -355,20 +364,39 @@ export function resolveFragments(responses = {}, templatesDir) {
             await fsp.access(jestSetupSrc);
             await fsp.copyFile(jestSetupSrc, path.join(projectPath, `jest.setup.${extConfig}`));
           } catch {}
-          const babelSrc = path.join(testingDir, "babel.config.cjs");
-          try {
-            await fsp.access(babelSrc);
-            await fsp.copyFile(babelSrc, path.join(projectPath, "babel.config.cjs"));
-          } catch {}
+          if (fw.name !== "next") {
+            const babelSrc = path.join(testingDir, "babel.config.cjs");
+            try {
+              await fsp.access(babelSrc);
+              await fsp.copyFile(babelSrc, path.join(projectPath, "babel.config.cjs"));
+            } catch {}
+          }
         }
 
-        // Architecture-scoped test file
-        const testSrc = path.join(testingDir, architecture, `src/__tests__/App.test.${ext}`);
-        try {
-          await fsp.access(testSrc);
-          const testDest = path.join(projectPath, "src", "__tests__", `App.test.${ext}`);
-          await writeFileRecursive(testDest, await fsp.readFile(testSrc, "utf8"));
-        } catch {}
+        if (fw.name === "next") {
+          const testFileName = fw.variant === "pages-router" ? "index" : "page";
+          const testSrc = path.join(
+            testingDir,
+            "next",
+            fw.variant,
+            "src",
+            "__tests__",
+            `${testFileName}.test.${ext}`
+          );
+          try {
+            await fsp.access(testSrc);
+            const testDest = path.join(projectPath, "src", "__tests__", `${testFileName}.test.${ext}`);
+            await writeFileRecursive(testDest, await fsp.readFile(testSrc, "utf8"));
+          } catch {}
+        } else {
+          // Architecture-scoped test file
+          const testSrc = path.join(testingDir, architecture, `src/__tests__/App.test.${ext}`);
+          try {
+            await fsp.access(testSrc);
+            const testDest = path.join(projectPath, "src", "__tests__", `App.test.${ext}`);
+            await writeFileRecursive(testDest, await fsp.readFile(testSrc, "utf8"));
+          } catch {}
+        }
       },
     });
   }

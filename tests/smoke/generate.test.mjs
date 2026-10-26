@@ -6,7 +6,8 @@ import os from "os";
 import { execSync } from "child_process";
 import { fileURLToPath } from "url";
 
-import { runViteCreate } from "../../src/scaffold.js";
+import { runViteCreate, scaffoldBase } from "../../src/scaffold.js";
+import { getProvider } from "../../src/engine/providers/base-provider.js";
 import { injectArchitecture, injectConditionals, injectFormatter } from "../../src/injector.js";
 import { copyEnvExample } from "../../src/env.js";
 import { setupCssFramework } from "../../src/css.js";
@@ -223,6 +224,113 @@ test("offline smoke: shadcn UI kit scaffold (ts) is coherent", async () => {
   // Check root tsconfig.json has paths alias
   const rootTsconfig = JSON.parse(await fsp.readFile(path.join(out, "tsconfig.json"), "utf8"));
   assert.ok(rootTsconfig.compilerOptions?.paths?.["@/*"], "root tsconfig missing @/* alias");
+
+  await fsp.rm(projectPath, { recursive: true, force: true });
+});
+
+test("offline smoke: Next.js App Router scaffold with Jest does not emit babel.config.cjs (issue #65)", async () => {
+  const projectPath = path.join(os.tmpdir(), "lumen-smoke-next-app-jest");
+  await fsp.rm(projectPath, { recursive: true, force: true });
+  await fsp.mkdir(projectPath, { recursive: true });
+
+  const responses = {
+    projectName: "next-jest-app",
+    framework: { name: "next", variant: "app-router" },
+    frameworkName: "next",
+    frameworkVariant: "app-router",
+    architecture: "feature-based",
+    language: "ts",
+    cssFramework: "tailwind",
+    testing: "jest",
+    bundler: "turbopack",
+    adapter: "none",
+    linter: "eslint",
+    formatter: "prettier",
+    gitInit: false,
+    readme: true,
+  };
+
+  const provider = getProvider("next", "app-router");
+  await scaffoldBase(projectPath, provider, "ts", TEMPLATES_DIR);
+  await injectConditionals(projectPath, TEMPLATES_DIR, responses, responses.architecture, responses.language);
+  await injectFormatter(projectPath, TEMPLATES_DIR, responses);
+  await emitManifest(projectPath, responses);
+
+  // 1. Root cause verification: Next dev / Turbopack breaks if any babel config is present
+  const babelCandidates = [
+    "babel.config.cjs",
+    "babel.config.js",
+    "babel.config.mjs",
+    "babel.config.json",
+    ".babelrc",
+    ".babelrc.json",
+    ".babelrc.js",
+    ".babelrc.cjs",
+  ];
+  for (const babelFile of babelCandidates) {
+    assert.equal(
+      await exists(path.join(projectPath, babelFile)),
+      false,
+      `Next.js project root must NOT contain ${babelFile} when Jest is selected (#65)`
+    );
+  }
+
+  // 2. Next native jest config is emitted with next/jest wrapper
+  assert.ok(await exists(path.join(projectPath, "jest.config.ts")), "jest.config.ts missing");
+  const jestCfg = await fsp.readFile(path.join(projectPath, "jest.config.ts"), "utf8");
+  assert.ok(jestCfg.includes('import nextJest from "next/jest.js";'), "must use Next's native next/jest wrapper");
+  assert.ok(jestCfg.includes("createJestConfig"), "must export createJestConfig");
+  assert.ok(jestCfg.includes("jest.setup.ts"), "must configure jest.setup.ts");
+
+  // 3. Setup file exists
+  assert.ok(await exists(path.join(projectPath, "jest.setup.ts")), "jest.setup.ts missing");
+
+  // 4. Test file exists and tests App Router Home page
+  assert.ok(await exists(path.join(projectPath, "src/__tests__/page.test.tsx")), "src/__tests__/page.test.tsx missing");
+  assert.equal(await exists(path.join(projectPath, "src/__tests__/App.test.tsx")), false, "stray App.test.tsx should not exist");
+
+  // 5. Scripts exist in package.json
+  const pkgJson = JSON.parse(await fsp.readFile(path.join(projectPath, "package.json"), "utf8"));
+  assert.equal(pkgJson.scripts.test, "jest");
+  assert.equal(pkgJson.scripts["test:watch"], "jest --watch");
+
+  await fsp.rm(projectPath, { recursive: true, force: true });
+});
+
+test("offline smoke: Next.js Pages Router scaffold with Jest (js) emits jest.config.mjs without babel config (#65)", async () => {
+  const projectPath = path.join(os.tmpdir(), "lumen-smoke-next-pages-jest");
+  await fsp.rm(projectPath, { recursive: true, force: true });
+  await fsp.mkdir(projectPath, { recursive: true });
+
+  const responses = {
+    projectName: "next-pages-jest-app",
+    framework: { name: "next", variant: "pages-router" },
+    frameworkName: "next",
+    frameworkVariant: "pages-router",
+    architecture: "feature-based",
+    language: "js",
+    cssFramework: "tailwind",
+    testing: "jest",
+    bundler: "turbopack",
+    adapter: "none",
+    linter: "eslint",
+    formatter: "prettier",
+    gitInit: false,
+    readme: true,
+  };
+
+  const provider = getProvider("next", "pages-router");
+  await scaffoldBase(projectPath, provider, "js", TEMPLATES_DIR);
+  await injectConditionals(projectPath, TEMPLATES_DIR, responses, responses.architecture, responses.language);
+  await injectFormatter(projectPath, TEMPLATES_DIR, responses);
+  await emitManifest(projectPath, responses);
+
+  assert.equal(await exists(path.join(projectPath, "babel.config.cjs")), false);
+  assert.ok(await exists(path.join(projectPath, "jest.config.mjs")), "jest.config.mjs missing");
+  const jestCfg = await fsp.readFile(path.join(projectPath, "jest.config.mjs"), "utf8");
+  assert.ok(jestCfg.includes('import nextJest from "next/jest.js";'));
+  assert.ok(await exists(path.join(projectPath, "jest.setup.js")), "jest.setup.js missing");
+  assert.ok(await exists(path.join(projectPath, "src/__tests__/index.test.jsx")), "src/__tests__/index.test.jsx missing");
 
   await fsp.rm(projectPath, { recursive: true, force: true });
 });

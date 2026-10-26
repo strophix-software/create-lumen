@@ -10,5 +10,6 @@ node_modules/
 AGENTS.md
 tests/.cache/
 .omo/
+.kilo/
 test-app/
 test-*/

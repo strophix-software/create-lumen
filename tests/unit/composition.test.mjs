@@ -288,3 +288,124 @@ test("composition: Next.js adapter overlay and turbopack dev script", async () =
     await fsp.rm(dir, { recursive: true, force: true });
   }
 });
+
+test("composition: Next.js App Router with Jest emits native next/jest config and never babel.config.cjs (#65)", async () => {
+  const dir = await fsp.mkdtemp(path.join(os.tmpdir(), "lumen-next-jest-app-"));
+  try {
+    await fsp.writeFile(
+      path.join(dir, "package.json"),
+      JSON.stringify({ name: "app", scripts: {} }, null, 2)
+    );
+
+    const responses = {
+      frameworkName: "next",
+      frameworkVariant: "app-router",
+      architecture: "feature-based",
+      language: "ts",
+      testing: "jest",
+    };
+    const fragments = resolveFragments(responses, TEMPLATES_DIR);
+    const jestFrag = fragments.find((f) => f.id === "tooling:testing:jest");
+    assert.ok(jestFrag, "Jest testing fragment should be present");
+    assert.equal(jestFrag.scripts.test, "jest");
+    assert.equal(jestFrag.scripts["test:watch"], "jest --watch");
+
+    await applyFragments(dir, fragments, { templatesDir: TEMPLATES_DIR, responses, language: "ts" });
+
+    // 1. babel.config.cjs MUST NOT exist (#65)
+    assert.equal(
+      await fsp.stat(path.join(dir, "babel.config.cjs")).catch(() => false),
+      false,
+      "babel.config.cjs must never be emitted for Next.js"
+    );
+
+    // 2. jest.config.ts must exist and use next/jest wrapper
+    const jestConfigContent = await fsp.readFile(path.join(dir, "jest.config.ts"), "utf8");
+    assert.ok(jestConfigContent.includes('import nextJest from "next/jest.js";'), "must import next/jest.js");
+    assert.ok(jestConfigContent.includes("createJestConfig"), "must wrap config with createJestConfig");
+    assert.ok(jestConfigContent.includes("jest.setup.ts"), "must reference jest.setup.ts");
+
+    // 3. jest.setup.ts must exist
+    assert.ok(await fsp.stat(path.join(dir, "jest.setup.ts")).catch(() => false));
+
+    // 4. App Router test file must test Home component
+    const testContent = await fsp.readFile(path.join(dir, "src", "__tests__", "page.test.tsx"), "utf8");
+    assert.ok(testContent.includes('@/app/page'), "must test @/app/page");
+    assert.equal(
+      await fsp.stat(path.join(dir, "src", "__tests__", "App.test.tsx")).catch(() => false),
+      false,
+      "App.test.tsx must not be emitted for Next.js"
+    );
+  } finally {
+    await fsp.rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("composition: Next.js Pages Router with Jest (JS) emits jest.config.mjs and never babel.config.cjs (#65)", async () => {
+  const dir = await fsp.mkdtemp(path.join(os.tmpdir(), "lumen-next-jest-pages-"));
+  try {
+    await fsp.writeFile(
+      path.join(dir, "package.json"),
+      JSON.stringify({ name: "app", scripts: {} }, null, 2)
+    );
+
+    const responses = {
+      frameworkName: "next",
+      frameworkVariant: "pages-router",
+      architecture: "feature-based",
+      language: "js",
+      testing: "jest",
+    };
+    const fragments = resolveFragments(responses, TEMPLATES_DIR);
+    await applyFragments(dir, fragments, { templatesDir: TEMPLATES_DIR, responses, language: "js" });
+
+    // 1. babel.config.cjs MUST NOT exist
+    assert.equal(
+      await fsp.stat(path.join(dir, "babel.config.cjs")).catch(() => false),
+      false,
+      "babel.config.cjs must never be emitted for Next.js"
+    );
+
+    // 2. jest.config.mjs must exist
+    const jestConfigContent = await fsp.readFile(path.join(dir, "jest.config.mjs"), "utf8");
+    assert.ok(jestConfigContent.includes('import nextJest from "next/jest.js";'));
+    assert.ok(jestConfigContent.includes("jest.setup.js"));
+
+    // 3. jest.setup.js must exist
+    assert.ok(await fsp.stat(path.join(dir, "jest.setup.js")).catch(() => false));
+
+    // 4. Pages Router test file must test Home component at @/pages/index
+    const testContent = await fsp.readFile(path.join(dir, "src", "__tests__", "index.test.jsx"), "utf8");
+    assert.ok(testContent.includes('@/pages/index'));
+  } finally {
+    await fsp.rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("composition: React/Vite with Jest still emits babel.config.cjs and standard jest.config.ts", async () => {
+  const dir = await fsp.mkdtemp(path.join(os.tmpdir(), "lumen-react-jest-"));
+  try {
+    await fsp.writeFile(
+      path.join(dir, "package.json"),
+      JSON.stringify({ name: "app", scripts: {} }, null, 2)
+    );
+
+    const responses = {
+      frameworkName: "react",
+      frameworkVariant: "vite",
+      architecture: "feature-based",
+      language: "ts",
+      testing: "jest",
+    };
+    const fragments = resolveFragments(responses, TEMPLATES_DIR);
+    await applyFragments(dir, fragments, { templatesDir: TEMPLATES_DIR, responses, language: "ts" });
+
+    // React/Vite DOES emit babel.config.cjs
+    assert.ok(await fsp.stat(path.join(dir, "babel.config.cjs")).catch(() => false));
+    const jestConfigContent = await fsp.readFile(path.join(dir, "jest.config.ts"), "utf8");
+    assert.ok(jestConfigContent.includes("babel-jest"));
+    assert.ok(await fsp.stat(path.join(dir, "src", "__tests__", "App.test.tsx")).catch(() => false));
+  } finally {
+    await fsp.rm(dir, { recursive: true, force: true });
+  }
+});

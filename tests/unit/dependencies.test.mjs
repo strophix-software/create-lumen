@@ -95,6 +95,18 @@ test("jest installs jest-environment-jsdom + babel presets", () => {
   lacks(devDeps, "vitest");
 });
 
+test("jest next.js (TS): installs next/jest dependencies without babel presets", () => {
+  const { devDeps } = cellDeps({ testing: "jest", framework: "next", language: "ts" });
+  has(devDeps, "jest", "jest-environment-jsdom", "@testing-library/react", "@testing-library/jest-dom", "@types/jest");
+  lacks(devDeps, "babel-jest", "@babel/preset-env", "@babel/preset-react", "@babel/preset-typescript", "jsdom", "vitest");
+});
+
+test("jest next.js (JS): installs next/jest dependencies without @types/jest or babel presets", () => {
+  const { devDeps } = cellDeps({ testing: "jest", framework: "next", language: "js" });
+  has(devDeps, "jest", "jest-environment-jsdom", "@testing-library/react", "@testing-library/jest-dom");
+  lacks(devDeps, "@types/jest", "babel-jest", "@babel/preset-env", "@babel/preset-react", "@babel/preset-typescript", "jsdom", "vitest");
+});
+
 test("eslint + ts declares jiti and typescript-eslint (ESLint >= 10 TS config loader)", () => {
   const { devDeps } = cellDeps({ linter: "eslint", language: "ts" });
   has(devDeps, "eslint", "@eslint/js", "eslint-plugin-react-hooks", "eslint-plugin-react-refresh", "globals", "jiti", "typescript-eslint");
