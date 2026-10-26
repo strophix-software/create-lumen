@@ -6,7 +6,6 @@ import { parseManifest } from "./manifest/schema.js";
 import {
   normalizeFramework,
   isPromptVisible,
-  getDefaultResponses,
 } from "./engine/capabilities.js";
 
 export const PRESETS = {
