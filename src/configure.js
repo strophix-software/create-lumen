@@ -4,8 +4,20 @@ import { readFileContent } from "@/utils/fs.js";
 import { getPathAliases, getViteAliases } from "@/aliases.js";
 import { normalizeFramework } from "@/engine/capabilities.js";
 
-export async function configureProject(projectPath, language, cssFramework, framework = "vite") {
-  const fw = normalizeFramework(framework);
+export async function configureProject(projectPath, languageOrResponses, cssFramework, framework = "vite") {
+  let language = languageOrResponses;
+  let css = cssFramework;
+  let fwArg = framework;
+  if (languageOrResponses && typeof languageOrResponses === "object") {
+    language = languageOrResponses.language;
+    css = languageOrResponses.cssFramework;
+    fwArg =
+      languageOrResponses.framework || {
+        name: languageOrResponses.frameworkName,
+        variant: languageOrResponses.frameworkVariant,
+      };
+  }
+  const fw = normalizeFramework(fwArg);
   const ext = language === "ts" ? "ts" : "js";
 
   if (fw.name === "next") {
@@ -23,7 +35,7 @@ export async function configureProject(projectPath, language, cssFramework, fram
   }
 
   // Add path aliases to vite.config for non-tailwind setups
-  if (cssFramework !== "tailwind") {
+  if (css !== "tailwind") {
     await addPathAliasesToViteConfig(projectPath, ext);
   }
 
@@ -184,6 +196,10 @@ async function configurePackageJson(projectPath, language, framework = "vite") {
       pkg.scripts.dev ??= "vite";
       pkg.scripts.build ??= "vite build";
       pkg.scripts.preview ??= "vite preview";
+    } else {
+      if (pkg.scripts.preview && pkg.scripts.preview.includes("vite")) {
+        delete pkg.scripts.preview;
+      }
     }
 
     if (language === "ts") {

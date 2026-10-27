@@ -18,6 +18,9 @@ export async function cleanupBoilerplate(projectPath, responses = {}) {
   if (isNext) {
     await deleteIfExists(`${projectPath}/src/main.tsx`);
     await deleteIfExists(`${projectPath}/src/main.jsx`);
+    await deleteIfExists(`${projectPath}/src/App.tsx`);
+    await deleteIfExists(`${projectPath}/src/App.jsx`);
+    await deleteIfExists(`${projectPath}/src/App.css`);
 
     const isPagesRouter =
       responses?.framework?.variant === "pages-router" ||

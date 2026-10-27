@@ -16,7 +16,7 @@ export function resolvePaths({ architecture, framework = {} } = {}) {
   const variant = framework.variant || (fwName === "next" ? "app-router" : "vite");
 
   // Helper to pick Next.js pages root based on variant
-  const nextPagesForVariant = (v) => (v === "pages-router" ? "pages" : "app");
+  const nextPagesForVariant = (v) => (v === "pages-router" ? "src/pages" : "src/app");
   const isNext = fwName === "next";
 
   // -- feature-based (React + Vite canonical, also Next feature-based)

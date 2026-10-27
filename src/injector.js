@@ -167,35 +167,56 @@ export function getComponentsJson({
   architecture = "feature-based",
   language = "ts",
 }) {
-  const isNext = framework === "next";
+  const fwName =
+    typeof framework === "object" && framework !== null
+      ? framework.name
+      : String(framework);
+  const fwVariant =
+    typeof framework === "object" && framework !== null
+      ? framework.variant
+      : "app-router";
+  const isNext = fwName === "next";
   const isTs = language === "ts";
+  const isFeatureBased = architecture === "feature-based";
 
   if (isNext) {
+    const cssPath =
+      fwVariant === "pages-router"
+        ? "src/styles/globals.css"
+        : "src/app/globals.css";
+
     // Next App Router contract stub
     return {
       $schema: "https://ui.shadcn.com/schema.json",
       style: "new-york",
-      rsc: true,
+      rsc: fwVariant !== "pages-router",
       tsx: isTs,
       tailwind: {
         config: "",
-        css: "app/globals.css",
+        css: cssPath,
         baseColor: "neutral",
         cssVariables: true,
         prefix: "",
       },
-      aliases: {
-        components: "@/components",
-        utils: "@/lib/utils",
-        ui: "@/components/ui",
-        lib: "@/lib",
-        hooks: "@/hooks",
-      },
+      aliases: isFeatureBased
+        ? {
+            components: "@/shared/components",
+            utils: "@/lib/utils",
+            ui: "@/shared/components/ui",
+            lib: "@/lib",
+            hooks: "@/shared/hooks",
+          }
+        : {
+            components: "@/components",
+            utils: "@/lib/utils",
+            ui: "@/components/ui",
+            lib: "@/lib",
+            hooks: "@/hooks",
+          },
       iconLibrary: "lucide",
     };
   }
 
-  const isFeatureBased = architecture === "feature-based";
   return {
     $schema: "https://ui.shadcn.com/schema.json",
     style: "new-york",

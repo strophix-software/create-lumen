@@ -264,8 +264,8 @@ test("injectUiKit: rejects shadcn when cssFramework is not tailwind", async () =
 test("getComponentsJson: returns Next App Router contract stub when framework is next", () => {
   const stub = getComponentsJson({ framework: "next", architecture: "feature-based", language: "ts" });
   assert.equal(stub.rsc, true);
-  assert.equal(stub.tailwind.css, "app/globals.css");
-  assert.equal(stub.aliases.components, "@/components");
-  assert.equal(stub.aliases.ui, "@/components/ui");
+  assert.equal(stub.tailwind.css, "src/app/globals.css");
+  assert.equal(stub.aliases.components, "@/shared/components");
+  assert.equal(stub.aliases.ui, "@/shared/components/ui");
 });
 

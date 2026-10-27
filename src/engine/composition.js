@@ -180,6 +180,9 @@ export function resolveFragments(responses = {}, templatesDir) {
       if (fw.name === "next") {
         try { await fsp.rm(path.join(projectPath, "src", "main.tsx"), { force: true }); } catch {}
         try { await fsp.rm(path.join(projectPath, "src", "main.jsx"), { force: true }); } catch {}
+        try { await fsp.rm(path.join(projectPath, "src", "App.tsx"), { force: true }); } catch {}
+        try { await fsp.rm(path.join(projectPath, "src", "App.jsx"), { force: true }); } catch {}
+        try { await fsp.rm(path.join(projectPath, "src", "App.css"), { force: true }); } catch {}
         if (fw.variant === "pages-router") {
           try { await fsp.rm(path.join(projectPath, "src", "app"), { recursive: true, force: true }); } catch {}
         } else {
