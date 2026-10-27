@@ -1,5 +1,6 @@
 import { promises as fsp } from "fs";
 import path from "path";
+import { normalizeFramework } from "./engine/capabilities.js";
 import {
   FRAGMENT_SCOPES,
   resolveFragments,
@@ -38,9 +39,18 @@ export async function injectArchitecture(
     typeof frameworkOptions === "object" && frameworkOptions !== null
       ? frameworkOptions
       : typeof frameworkOptions === "string"
-      ? { frameworkName: frameworkOptions }
+      ? { name: frameworkOptions }
       : {};
-  const responses = { architecture, language, cssFramework, ...fwObj };
+  const framework = normalizeFramework(fwObj);
+  const responses = {
+    architecture,
+    language,
+    cssFramework,
+    framework,
+    frameworkName: framework.name,
+    frameworkVariant: framework.variant,
+    ...fwObj,
+  };
   const allFragments = resolveFragments(responses, templatesDir);
   const archFragments = allFragments.filter(
     (f) =>

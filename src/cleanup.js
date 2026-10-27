@@ -16,6 +16,9 @@ export async function cleanupBoilerplate(projectPath, responses = {}) {
     (await fsp.stat(path.join(projectPath, "next.config.js")).catch(() => false));
 
   if (isNext) {
+    await deleteIfExists(`${projectPath}/src/main.tsx`);
+    await deleteIfExists(`${projectPath}/src/main.jsx`);
+
     const isPagesRouter =
       responses?.framework?.variant === "pages-router" ||
       responses?.frameworkVariant === "pages-router" ||

@@ -293,6 +293,7 @@ export function parseCliArgs(argv = process.argv.slice(2)) {
       "agent-docs": { type: "boolean" },
       agentDocs: { type: "boolean" },
       docker: { type: "boolean" },
+      testing: { type: "string" },
       linter: { type: "string" },
       help: { type: "boolean", short: "h", default: false },
       version: { type: "boolean", short: "v", default: false },
@@ -329,6 +330,7 @@ export function parseCliArgs(argv = process.argv.slice(2)) {
   const routeGroups = values["route-groups"] ?? values.routeGroups ?? null;
   const agentDocs = values["agent-docs"] ?? values.agentDocs ?? null;
   const docker = Boolean(values.docker);
+  const testing = values.testing ? values.testing.trim().toLowerCase() : null;
   const linter = values.linter ? values.linter.trim().toLowerCase() : null;
 
   return {
@@ -346,6 +348,7 @@ export function parseCliArgs(argv = process.argv.slice(2)) {
     routeGroups,
     agentDocs,
     docker,
+    testing,
     linter,
     help: Boolean(values.help),
     version: Boolean(values.version),

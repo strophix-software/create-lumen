@@ -599,6 +599,42 @@ test("composition: Next.js App Router with routeGroups emits route group layouts
   }
 });
 
+test("composition: Next.js App Router with Route Groups and Vitest rewrites test import to @/app/(public)/page", async () => {
+  const dir = await fsp.mkdtemp(path.join(os.tmpdir(), "lumen-next-rg-vitest-"));
+  try {
+    await fsp.writeFile(
+      path.join(dir, "package.json"),
+      JSON.stringify({ name: "app", scripts: {} }, null, 2)
+    );
+
+    const responses = {
+      frameworkName: "next",
+      frameworkVariant: "app-router",
+      architecture: "feature-based",
+      language: "ts",
+      routeGroups: true,
+      testing: "vitest",
+    };
+    const fragments = resolveFragments(responses, TEMPLATES_DIR);
+    await applyFragments(dir, fragments, { templatesDir: TEMPLATES_DIR, responses, language: "ts" });
+
+    const testPath = path.join(dir, "src", "__tests__", "page.test.tsx");
+    assert.ok(await fsp.stat(testPath).catch(() => false), "page.test.tsx must exist");
+    const testContent = await fsp.readFile(testPath, "utf8");
+    assert.ok(
+      testContent.includes("@/app/(public)/page"),
+      "must import @/app/(public)/page when routeGroups is enabled"
+    );
+    assert.equal(
+      testContent.includes("@/app/page"),
+      false,
+      "must not retain @/app/page import"
+    );
+  } finally {
+    await fsp.rm(dir, { recursive: true, force: true });
+  }
+});
+
 test("composition: Next.js with Vitest emits clean vitest.config without @vitejs/plugin-react (#66)", async () => {
   const dir = await fsp.mkdtemp(path.join(os.tmpdir(), "lumen-next-vitest-"));
   try {

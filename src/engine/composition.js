@@ -178,6 +178,8 @@ export function resolveFragments(responses = {}, templatesDir) {
     targetDir: "src",
     action: async ({ projectPath }) => {
       if (fw.name === "next") {
+        try { await fsp.rm(path.join(projectPath, "src", "main.tsx"), { force: true }); } catch {}
+        try { await fsp.rm(path.join(projectPath, "src", "main.jsx"), { force: true }); } catch {}
         if (fw.variant === "pages-router") {
           try { await fsp.rm(path.join(projectPath, "src", "app"), { recursive: true, force: true }); } catch {}
         } else {
@@ -524,7 +526,11 @@ export function resolveFragments(responses = {}, templatesDir) {
           try {
             await fsp.access(testSrc);
             const testDest = path.join(projectPath, "src", "__tests__", `${testFileName}.test.${ext}`);
-            await writeFileRecursive(testDest, await fsp.readFile(testSrc, "utf8"));
+            let testContent = await fsp.readFile(testSrc, "utf8");
+            if (responses.routeGroups === true && fw.variant === "app-router") {
+              testContent = testContent.replace("@/app/page", "@/app/(public)/page");
+            }
+            await writeFileRecursive(testDest, testContent);
           } catch {}
         } else {
           // Architecture-scoped test file
@@ -734,6 +740,16 @@ export function resolveFragments(responses = {}, templatesDir) {
         try {
           await fsp.rm(path.join(projectPath, "src", "app", "page.tsx"), { force: true });
         } catch {}
+        // Adjust existing test file if it imported @/app/page before route groups was applied
+        for (const testExt of ["tsx", "jsx", "ts", "js"]) {
+          const testPath = path.join(projectPath, "src", "__tests__", `page.test.${testExt}`);
+          try {
+            const content = await fsp.readFile(testPath, "utf8");
+            if (content.includes("@/app/page")) {
+              await fsp.writeFile(testPath, content.replace(/@\/app\/page/g, "@/app/(public)/page"), "utf8");
+            }
+          } catch {}
+        }
       },
     });
   }

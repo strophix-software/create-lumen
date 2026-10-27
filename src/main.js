@@ -55,6 +55,7 @@ export async function main(options = {}) {
     database: databaseArg,
     databaseProvider: dbProviderArg,
     docker: dockerArg,
+    testing: testingArg,
     routeGroups: routeGroupsArg,
     bundler: bundlerArg,
     adapter: adapterArg,
@@ -112,6 +113,7 @@ export async function main(options = {}) {
   // Overlay explicit CLI flags if provided
   if (databaseArg) responses.database = databaseArg;
   if (dbProviderArg) responses.databaseProvider = dbProviderArg;
+  if (testingArg) responses.testing = testingArg;
   if (dockerArg) responses.docker = true;
   if (routeGroupsArg) responses.routeGroups = true;
   if (bundlerArg) responses.bundler = bundlerArg;
