@@ -391,7 +391,15 @@ test("offline smoke: Next.js App Router scaffold with Prisma ORM (#62)", async (
   assert.equal(pkgJson.scripts["db:push"], "prisma db push");
   assert.equal(pkgJson.scripts["db:seed"], "prisma db seed");
   assert.equal(pkgJson.scripts["db:studio"], "prisma studio");
-  assert.equal(pkgJson.prisma?.seed, "tsx prisma/seed.ts");
+  assert.equal(pkgJson.prisma, undefined, "package.json should not contain deprecated prisma key (#75)");
+
+  // 4b. prisma.config.ts exists and specifies defineConfig with earlyAccess and seed (#75)
+  const prismaConfigPath = path.join(projectPath, "prisma.config.ts");
+  assert.ok(await exists(prismaConfigPath), "prisma.config.ts missing (#75)");
+  const prismaConfigContent = await fsp.readFile(prismaConfigPath, "utf8");
+  assert.ok(prismaConfigContent.includes("defineConfig"));
+  assert.ok(prismaConfigContent.includes("earlyAccess: true"));
+  assert.ok(prismaConfigContent.includes('seed: "tsx prisma/seed.ts"'));
 
   // 5. .env.example contains PostgreSQL / Supabase URLs
   const envContent = await fsp.readFile(path.join(projectPath, ".env.example"), "utf8");
@@ -402,6 +410,16 @@ test("offline smoke: Next.js App Router scaffold with Prisma ORM (#62)", async (
   const manifest = parseManifest(JSON.parse(await fsp.readFile(path.join(projectPath, "lumen.config.json"), "utf8")));
   assert.equal(manifest.database?.orm, "prisma");
   assert.equal(manifest.database?.provider, "postgresql");
+
+  // 7. README.md corresponds to Next.js 16 and Prisma without Vite (#74, #75)
+  await generateReadme(projectPath, responses.projectName, responses, TEMPLATES_DIR);
+  assert.ok(await exists(path.join(projectPath, "README.md")), "README.md missing");
+  const readmeContent = await fsp.readFile(path.join(projectPath, "README.md"), "utf8");
+  assert.ok(readmeContent.includes("Next.js 16 (App Router + Turbopack)"), "README must document Next.js 16 Turbopack");
+  assert.ok(readmeContent.includes("Prisma ORM"), "README must document Prisma ORM");
+  assert.ok(readmeContent.includes("npm run start"), "README must document npm run start");
+  assert.equal(readmeContent.includes("React + Vite"), false, "README must not contain 'React + Vite'");
+  assert.equal(readmeContent.includes("npm run preview"), false, "README must not contain 'npm run preview'");
 
   await fsp.rm(projectPath, { recursive: true, force: true });
 });

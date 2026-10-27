@@ -98,7 +98,7 @@ export function computeDeps(responses) {
   // Database
   if (responses.database === "prisma") {
     deps.push("@prisma/client@^6");
-    databaseDevDeps.push("prisma@^6");
+    databaseDevDeps.push("prisma@^6", "@prisma/config@^6");
     if (responses.language === "ts") {
       databaseDevDeps.push("tsx");
     }
