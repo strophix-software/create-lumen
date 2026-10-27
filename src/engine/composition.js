@@ -757,6 +757,19 @@ export function resolveFragments(responses = {}, templatesDir) {
         try {
           await fsp.rm(path.join(projectPath, "src", "app", "page.module.css"), { force: true });
         } catch {}
+        // Remove middleware so Next.js 16 (Turbopack) does not collide with proxy.ts/proxy.js (#70)
+        try {
+          await fsp.rm(path.join(projectPath, "src", "middleware.ts"), { force: true });
+        } catch {}
+        try {
+          await fsp.rm(path.join(projectPath, "src", "middleware.js"), { force: true });
+        } catch {}
+        try {
+          await fsp.rm(path.join(projectPath, "middleware.ts"), { force: true });
+        } catch {}
+        try {
+          await fsp.rm(path.join(projectPath, "middleware.js"), { force: true });
+        } catch {}
         // Adjust existing test file if it imported @/app/page before route groups was applied
         for (const testExt of ["tsx", "jsx", "ts", "js"]) {
           const testPath = path.join(projectPath, "src", "__tests__", `page.test.${testExt}`);

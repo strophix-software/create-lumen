@@ -22,6 +22,7 @@
   ],
   "scripts": {
     "gen:schema": "node scripts/generate-schema.mjs",
+    "lint": "eslint bin src register.js",
     "test": "node --import ./register.js --test \"tests/unit/*.test.mjs\" \"tests/smoke/*.test.mjs\"",
     "verify:vendor": "node --import ./register.js tests/verify/install-vendor.mjs",
     "verify:offline": "node --import ./register.js tests/verify/verify-offline.mjs",

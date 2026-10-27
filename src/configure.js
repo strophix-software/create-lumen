@@ -8,9 +8,11 @@ export async function configureProject(projectPath, languageOrResponses, cssFram
   let language = languageOrResponses;
   let css = cssFramework;
   let fwArg = framework;
+  let architecture = "feature-based";
   if (languageOrResponses && typeof languageOrResponses === "object") {
     language = languageOrResponses.language;
     css = languageOrResponses.cssFramework;
+    architecture = languageOrResponses.architecture || architecture;
     fwArg =
       languageOrResponses.framework || {
         name: languageOrResponses.frameworkName,
@@ -22,29 +24,54 @@ export async function configureProject(projectPath, languageOrResponses, cssFram
 
   if (fw.name === "next") {
     // Next.js ships its own tsconfig.json with next plugins and paths.
-    // Skip Vite tsconfig.app.json and vite.config mutations.
+    // Update path aliases in tsconfig.json / jsconfig.json (#72)
+    const paths = getPathAliases(architecture);
+    const tsconfigPath = path.join(projectPath, "tsconfig.json");
+    try {
+      const content = await readFileContent(tsconfigPath);
+      const config = JSON.parse(content);
+      if (!config.compilerOptions) config.compilerOptions = {};
+      config.compilerOptions.paths = {
+        ...(config.compilerOptions.paths || {}),
+        ...paths,
+      };
+      await fsp.writeFile(tsconfigPath, JSON.stringify(config, null, 2) + "\n", "utf8");
+    } catch {}
+
+    const jsconfigPath = path.join(projectPath, "jsconfig.json");
+    try {
+      const content = await readFileContent(jsconfigPath);
+      const config = JSON.parse(content);
+      if (!config.compilerOptions) config.compilerOptions = {};
+      config.compilerOptions.paths = {
+        ...(config.compilerOptions.paths || {}),
+        ...paths,
+      };
+      await fsp.writeFile(jsconfigPath, JSON.stringify(config, null, 2) + "\n", "utf8");
+    } catch {}
+
     await configurePackageJson(projectPath, language, fw);
     return;
   }
 
   // Set up tsconfig/jsconfig with the @/* path alias
   if (language === "ts") {
-    await configureTsconfig(projectPath);
+    await configureTsconfig(projectPath, architecture);
   } else {
-    await configureJsconfig(projectPath);
+    await configureJsconfig(projectPath, architecture);
   }
 
   // Add path aliases to vite.config for non-tailwind setups
   if (css !== "tailwind") {
-    await addPathAliasesToViteConfig(projectPath, ext);
+    await addPathAliasesToViteConfig(projectPath, ext, architecture);
   }
 
   // Add scripts to package.json
   await configurePackageJson(projectPath, language, fw);
 }
 
-async function configureTsconfig(projectPath) {
-  const paths = getPathAliases();
+async function configureTsconfig(projectPath, architecture = "feature-based") {
+  const paths = getPathAliases(architecture);
   // Create/update tsconfig.app.json with paths
   const tsconfigAppPath = path.join(projectPath, "tsconfig.app.json");
   try {
@@ -121,19 +148,19 @@ async function configureTsconfig(projectPath) {
   );
 }
 
-async function configureJsconfig(projectPath) {
+async function configureJsconfig(projectPath, architecture = "feature-based") {
   const jsconfigPath = path.join(projectPath, "jsconfig.json");
   const config = {
     compilerOptions: {
       baseUrl: ".",
-      paths: getPathAliases(),
+      paths: getPathAliases(architecture),
     },
     include: ["src"],
   };
   await fsp.writeFile(jsconfigPath, JSON.stringify(config, null, 2) + "\n", "utf8");
 }
 
-async function addPathAliasesToViteConfig(projectPath, ext) {
+async function addPathAliasesToViteConfig(projectPath, ext, architecture = "feature-based") {
   const viteConfigPath = path.join(projectPath, `vite.config.${ext}`);
   try {
     let content = await readFileContent(viteConfigPath);
@@ -158,7 +185,7 @@ async function addPathAliasesToViteConfig(projectPath, ext) {
 
     let result = lines.join("\n");
 
-    const aliasArray = getViteAliases()
+    const aliasArray = getViteAliases(architecture)
       .map((a) => `{ find: '${a.find}', replacement: ${a.replacement} }`)
       .join(",\n      ");
 

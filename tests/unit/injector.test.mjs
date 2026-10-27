@@ -221,16 +221,16 @@ test("injectUiKit: writes components.json, lib/utils cn helper, and Button/Card 
   const utilsCode = await fsp.readFile(path.join(dir, "src", "lib", "utils.ts"), "utf8");
   assert.match(utilsCode, /twMerge\(clsx\(inputs\)\)/);
 
-  // Primitives
-  assert.ok(await fsp.stat(path.join(dir, "src", "shared", "components", "ui", "Button.tsx")));
-  assert.ok(await fsp.stat(path.join(dir, "src", "shared", "components", "ui", "Card.tsx")));
+  // Primitives (kebab-case #72)
+  assert.ok(await fsp.stat(path.join(dir, "src", "shared", "components", "ui", "button.tsx")));
+  assert.ok(await fsp.stat(path.join(dir, "src", "shared", "components", "ui", "card.tsx")));
   assert.ok(await fsp.stat(path.join(dir, "src", "shared", "components", "ui", "index.ts")));
 
-  const buttonCode = await fsp.readFile(path.join(dir, "src", "shared", "components", "ui", "Button.tsx"), "utf8");
+  const buttonCode = await fsp.readFile(path.join(dir, "src", "shared", "components", "ui", "button.tsx"), "utf8");
   assert.match(buttonCode, /buttonVariants/);
   assert.match(buttonCode, /@\/lib\/utils/);
 
-  const cardCode = await fsp.readFile(path.join(dir, "src", "shared", "components", "ui", "Card.tsx"), "utf8");
+  const cardCode = await fsp.readFile(path.join(dir, "src", "shared", "components", "ui", "card.tsx"), "utf8");
   assert.match(cardCode, /CardHeader/);
   assert.match(cardCode, /@\/lib\/utils/);
 
@@ -253,8 +253,8 @@ test("injectUiKit: writes components.json and primitives for type-based JS", asy
   );
 
   assert.ok(await fsp.stat(path.join(dir, "src", "lib", "utils.js")));
-  assert.ok(await fsp.stat(path.join(dir, "src", "ui", "Button.jsx")));
-  assert.ok(await fsp.stat(path.join(dir, "src", "ui", "Card.jsx")));
+  assert.ok(await fsp.stat(path.join(dir, "src", "ui", "button.jsx")));
+  assert.ok(await fsp.stat(path.join(dir, "src", "ui", "card.jsx")));
   assert.ok(await fsp.stat(path.join(dir, "src", "ui", "index.js")));
 
   await fsp.rm(dir, { recursive: true, force: true });

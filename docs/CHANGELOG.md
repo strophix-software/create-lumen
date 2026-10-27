@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Omit `middleware.ts` in Next.js 16 when `proxy.ts` is generated** (#70) — Next.js 16.4+ (Turbopack) throws a fatal error if both `middleware.ts` and `proxy.ts` are detected. Route groups preset now exclusively emits `src/proxy.ts` / `src/proxy.js` with `proxy` and `config` exports and cleans up any conflicting `middleware` files.
+- **Prevent redundant folder nesting (`project/project`) in destination directory** (#71) — When the current working directory is empty and matches the project name, or when the user passes `.`, scaffolding writes directly into the root directory instead of creating a redundant nested subfolder.
+- **Kebab-case casing for UI components & path aliases in `tsconfig.json`** (#72) — Renamed primitive UI components to kebab-case (`button.tsx`, `card.tsx`) to match shadcn and `@lumen` registries, and configured TypeScript path aliases (`@/components/*`, `@/ui/*`, `@/lib/*`, `@/hooks/*`) matching `components.json` across architectures.
+
 ## [2.0.0-beta.3] — 2026-10-26
 
 ### Added

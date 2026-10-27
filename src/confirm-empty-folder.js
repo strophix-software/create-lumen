@@ -3,9 +3,11 @@ import { access, mkdir, readdir, rm } from "fs/promises";
 import path from "path";
 import { onCancel } from "@/prompts.js";
 
-export async function confirmEmptyFolder(projectName) {
-  const cwd = process.cwd();
-  const targetPath = path.resolve(cwd, projectName || "");
+export async function confirmEmptyFolder(projectNameOrPath, cwd = process.cwd()) {
+  const targetPath = path.isAbsolute(projectNameOrPath)
+    ? projectNameOrPath
+    : path.resolve(cwd, projectNameOrPath || "");
+  const folderName = path.basename(targetPath) || projectNameOrPath;
 
   try {
     await access(targetPath);
@@ -17,7 +19,7 @@ export async function confirmEmptyFolder(projectName) {
   if (files.length === 0) return targetPath;
 
   const remove = await select({
-    message: `Folder "${projectName}" already exists and is not empty. How would you like to proceed?`,
+    message: `Folder "${folderName}" already exists and is not empty. How would you like to proceed?`,
     options: [
       { label: "Delete all files and continue", value: true },
       { label: "Cancel setup", value: false },
@@ -29,7 +31,7 @@ export async function confirmEmptyFolder(projectName) {
     onCancel();
   }
 
-  if (targetPath === cwd) {
+  if (targetPath === cwd || targetPath === path.resolve(cwd)) {
     const inside = await readdir(targetPath);
     await Promise.all(
       inside.map((name) =>

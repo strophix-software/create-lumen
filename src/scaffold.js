@@ -4,22 +4,26 @@ import { execa } from "execa";
 import { copyDirRecursive } from "@/utils/fs.js";
 import { isYarnV1 } from "@/utils/yarn-v1.js";
 
-export async function runViteCreate(projectPath, projectName, pkg, language) {
+export async function runViteCreate(projectPath, projectName, pkg, language, isCurrentDir = false) {
   const useYarn = pkg === "yarn";
   const isYarn1 = useYarn && isYarnV1();
   const useNpm = pkg === "npm";
   const template = language === "ts" ? "react-ts" : "react";
 
+  const isCurrent = isCurrentDir || projectName === "." || projectPath === process.cwd();
+  const target = isCurrent ? "." : projectName;
+  const execCwd = isCurrent ? projectPath : path.dirname(projectPath);
+
   const createArgs = [
     "create",
     isYarn1 ? "vite" : "vite@latest",
-    projectName,
+    target,
     useNpm && "--",
     "--template",
     template,
   ].filter(Boolean);
 
-  await execa(pkg, createArgs, { stdio: "pipe", cwd: path.dirname(projectPath) });
+  await execa(pkg, createArgs, { stdio: "pipe", cwd: execCwd });
 }
 
 export async function runBaseInstall(projectPath, pkg) {

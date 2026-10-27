@@ -76,8 +76,8 @@ async function generate(responses, baseApp, projectPath) {
 // Files expected to exist in every generated project regardless of choices.
 const PARITY_FILE_CANDIDATES = [
   "src/app/App.tsx", "src/app/App.jsx",
-  "src/components/ui/Button.tsx", "src/components/ui/Button.jsx",
-  "src/shared/components/ui/Button.tsx", "src/shared/components/ui/Button.jsx",
+  "src/components/ui/button.tsx", "src/components/ui/button.jsx",
+  "src/shared/components/ui/button.tsx", "src/shared/components/ui/button.jsx",
   "src/main.tsx", "src/main.jsx",
   "scripts/create-feature.mjs",
   "vite.config.ts", "vitest.config.ts", "jest.config.ts",

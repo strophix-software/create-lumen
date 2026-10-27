@@ -47,3 +47,48 @@ test("configure: Next.js does not inject vite preview or vite scripts into packa
   assert.equal(scripts.preview, undefined);
   assert.equal(scripts.typecheck, "tsc -b");
 });
+
+test("configure: writes components.json alias mappings to tsconfig.json and tsconfig.app.json (#72)", async () => {
+  const dir = scaffoldPkg({});
+  await configureProject(dir, {
+    language: "ts",
+    cssFramework: "tailwind",
+    architecture: "feature-based",
+    framework: { name: "react", variant: "vite" },
+  });
+
+  const tsconfigApp = JSON.parse(readFileSync(path.join(dir, "tsconfig.app.json"), "utf8"));
+  assert.ok(tsconfigApp.compilerOptions?.paths?.["@/*"]);
+  assert.deepEqual(tsconfigApp.compilerOptions?.paths?.["@/components/*"], ["./src/shared/components/*"]);
+  assert.deepEqual(tsconfigApp.compilerOptions?.paths?.["@/ui/*"], ["./src/shared/components/ui/*"]);
+
+  const rootTsconfig = JSON.parse(readFileSync(path.join(dir, "tsconfig.json"), "utf8"));
+  assert.deepEqual(rootTsconfig.compilerOptions?.paths?.["@/components/*"], ["./src/shared/components/*"]);
+  assert.deepEqual(rootTsconfig.compilerOptions?.paths?.["@/ui/*"], ["./src/shared/components/ui/*"]);
+});
+
+test("configure: Next.js merges path aliases into tsconfig.json matching architecture (#72)", async () => {
+  const dir = scaffoldPkg({ dev: "next dev --turbopack", build: "next build", start: "next start" });
+  writeFileSync(
+    path.join(dir, "tsconfig.json"),
+    JSON.stringify({
+      compilerOptions: {
+        paths: {
+          "@/*": ["./src/*"],
+        },
+      },
+    })
+  );
+
+  await configureProject(dir, {
+    language: "ts",
+    cssFramework: "tailwind",
+    architecture: "feature-based",
+    framework: { name: "next", variant: "app-router" },
+  });
+
+  const tsconfig = JSON.parse(readFileSync(path.join(dir, "tsconfig.json"), "utf8"));
+  assert.deepEqual(tsconfig.compilerOptions?.paths?.["@/components/*"], ["./src/shared/components/*"]);
+  assert.deepEqual(tsconfig.compilerOptions?.paths?.["@/ui/*"], ["./src/shared/components/ui/*"]);
+  assert.deepEqual(tsconfig.compilerOptions?.paths?.["@/lib/*"], ["./src/lib/*"]);
+});

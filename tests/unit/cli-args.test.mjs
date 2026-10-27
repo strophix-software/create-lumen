@@ -68,6 +68,13 @@ test("cli-args: resolveProjectName respects cli args", () => {
 
     process.argv = ["node", "cli.js", "-y"];
     assert.equal(resolveProjectName({ cwd: "/home/user/fallback-folder" }), "fallback-folder");
+
+    // Dot argument resolution (#71)
+    process.argv = ["node", "cli.js", "."];
+    assert.equal(resolveProjectName(), ".");
+
+    process.argv = ["node", "cli.js", "-y", "."];
+    assert.equal(resolveProjectName(), ".");
   } finally {
     process.argv = orig;
   }
