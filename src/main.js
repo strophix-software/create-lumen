@@ -335,9 +335,16 @@ export async function main(options = {}) {
   }
 
   // 13.5 Format the freshly generated project so it is canonical on init
-  if (responses.formatter && responses.formatter !== "none") {
+  const shouldFormat =
+    (responses.formatter && responses.formatter !== "none") ||
+    responses.linter === "biome";
+  if (shouldFormat) {
+    const fmtName =
+      responses.formatter && responses.formatter !== "none"
+        ? responses.formatter
+        : "biome";
     const fmtPassSpin = spinner();
-    fmtPassSpin.start(`Formatting project with ${responses.formatter}...`);
+    fmtPassSpin.start(`Formatting project with ${fmtName}...`);
     try {
       await runProjectFormat(projectPath, responses);
       fmtPassSpin.stop(chalk.green("Project formatted."));
