@@ -212,6 +212,10 @@ test("injectUiKit: writes components.json, lib/utils cn helper, and Button/Card 
   assert.equal(compJson.tailwind.css, "src/shared/styles/globals.css");
   assert.equal(compJson.aliases.utils, "@/lib/utils");
   assert.equal(compJson.aliases.ui, "@/shared/components/ui");
+  assert.equal(
+    compJson.registries?.["@lumen"],
+    "https://raw.githubusercontent.com/strophix-software/lumen-registry/main/public/r"
+  );
 
   // cn helper
   const utilsCode = await fsp.readFile(path.join(dir, "src", "lib", "utils.ts"), "utf8");
@@ -243,6 +247,10 @@ test("injectUiKit: writes components.json and primitives for type-based JS", asy
   assert.equal(compJson.tsx, false);
   assert.equal(compJson.tailwind.css, "src/styles/globals.css");
   assert.equal(compJson.aliases.ui, "@/ui");
+  assert.equal(
+    compJson.registries?.["@lumen"],
+    "https://raw.githubusercontent.com/strophix-software/lumen-registry/main/public/r"
+  );
 
   assert.ok(await fsp.stat(path.join(dir, "src", "lib", "utils.js")));
   assert.ok(await fsp.stat(path.join(dir, "src", "ui", "Button.jsx")));
@@ -267,5 +275,9 @@ test("getComponentsJson: returns Next App Router contract stub when framework is
   assert.equal(stub.tailwind.css, "src/app/globals.css");
   assert.equal(stub.aliases.components, "@/shared/components");
   assert.equal(stub.aliases.ui, "@/shared/components/ui");
+  assert.equal(
+    stub.registries?.["@lumen"],
+    "https://raw.githubusercontent.com/strophix-software/lumen-registry/main/public/r"
+  );
 });
 

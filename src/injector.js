@@ -214,6 +214,9 @@ export function getComponentsJson({
             hooks: "@/hooks",
           },
       iconLibrary: "lucide",
+      registries: {
+        "@lumen": "https://raw.githubusercontent.com/strophix-software/lumen-registry/main/public/r",
+      },
     };
   }
 
@@ -247,6 +250,9 @@ export function getComponentsJson({
           hooks: "@/hooks",
         },
     iconLibrary: "lucide",
+    registries: {
+      "@lumen": "https://raw.githubusercontent.com/strophix-software/lumen-registry/main/public/r",
+    },
   };
 }
 
