@@ -155,7 +155,7 @@ test("injectLinter (Next.js) injects eslint.config.mjs and lint scripts", async 
 
   assert.ok(await fsp.stat(path.join(dir, "eslint.config.mjs")));
   const cfg = await read(dir, "eslint.config.mjs");
-  assert.ok(cfg.includes("next/core-web-vitals"));
+  assert.ok(cfg.includes("eslint-config-next"));
   const pkg = JSON.parse(await read(dir, "package.json"));
   assert.equal(pkg.scripts.lint, "eslint .");
   assert.equal(pkg.scripts["lint:fix"], "eslint . --fix");

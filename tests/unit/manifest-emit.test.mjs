@@ -94,3 +94,42 @@ test("emitManifest: passes Zod validator for every generated cell (feature/type 
     }
   }
 });
+
+test("buildManifest: harness commands reflect testing choice accurately", () => {
+  // 1. testing: "none" produces no test command in harness
+  const mNone = buildManifest({ ...baseResponses, testing: "none" });
+  assert.equal(
+    mNone.harness.commands.some((c) => c.name === "test"),
+    false,
+    "must not include test command when testing is none"
+  );
+  assert.ok(
+    mNone.harness.commands.some((c) => c.name === "build"),
+    "build command must still be present"
+  );
+
+  // 2. testing: "vitest" produces vitest run
+  const mVitest = buildManifest({ ...baseResponses, testing: "vitest" });
+  const vitestCmd = mVitest.harness.commands.find((c) => c.name === "test");
+  assert.ok(vitestCmd, "test command must exist for vitest");
+  assert.equal(vitestCmd.command, "vitest run");
+
+  // 3. testing: "jest" produces npm test
+  const mJest = buildManifest({ ...baseResponses, testing: "jest" });
+  const jestCmd = mJest.harness.commands.find((c) => c.name === "test");
+  assert.ok(jestCmd, "test command must exist for jest");
+  assert.equal(jestCmd.command, "npm test");
+
+  // 4. Next.js without explicit testing defaults to none and produces no test command
+  const mNext = buildManifest({
+    ...baseResponses,
+    frameworkName: "next",
+    frameworkVariant: "app-router",
+    testing: undefined,
+  });
+  assert.equal(
+    mNext.harness.commands.some((c) => c.name === "test"),
+    false,
+    "Next.js without explicit testing must default to none"
+  );
+});

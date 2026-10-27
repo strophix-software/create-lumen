@@ -36,3 +36,14 @@ test("configure: fills vite defaults when scripts are absent", async () => {
   assert.equal(scripts.preview, "vite preview");
   assert.equal(scripts.typecheck, "tsc -b");
 });
+
+test("configure: Next.js does not inject vite preview or vite scripts into package.json", async () => {
+  const dir = scaffoldPkg({ dev: "next dev --turbopack", build: "next build", start: "next start" });
+  await configureProject(dir, "ts", "tailwind", "next");
+  const scripts = scriptsOf(dir);
+  assert.equal(scripts.dev, "next dev --turbopack");
+  assert.equal(scripts.build, "next build");
+  assert.equal(scripts.start, "next start");
+  assert.equal(scripts.preview, undefined);
+  assert.equal(scripts.typecheck, "tsc -b");
+});

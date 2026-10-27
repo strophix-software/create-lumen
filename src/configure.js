@@ -11,7 +11,7 @@ export async function configureProject(projectPath, language, cssFramework, fram
   if (fw.name === "next") {
     // Next.js ships its own tsconfig.json with next plugins and paths.
     // Skip Vite tsconfig.app.json and vite.config mutations.
-    await configurePackageJson(projectPath, language);
+    await configurePackageJson(projectPath, language, fw);
     return;
   }
 
@@ -28,7 +28,7 @@ export async function configureProject(projectPath, language, cssFramework, fram
   }
 
   // Add scripts to package.json
-  await configurePackageJson(projectPath, language);
+  await configurePackageJson(projectPath, language, fw);
 }
 
 async function configureTsconfig(projectPath) {
@@ -167,7 +167,8 @@ async function addPathAliasesToViteConfig(projectPath, ext) {
   }
 }
 
-async function configurePackageJson(projectPath, language) {
+async function configurePackageJson(projectPath, language, framework = "vite") {
+  const fw = normalizeFramework(framework);
   const pkgPath = path.join(projectPath, "package.json");
   try {
     const content = await readFileContent(pkgPath);
@@ -179,9 +180,11 @@ async function configurePackageJson(projectPath, language) {
     // (Next.js bases ship next dev/build/start) or merged overlay fragments
     // (e.g. the bundler-aware dev script). React/Vite bases already carry the
     // vite commands, so this is a no-op there too.
-    pkg.scripts.dev ??= "vite";
-    pkg.scripts.build ??= "vite build";
-    pkg.scripts.preview ??= "vite preview";
+    if (fw.name !== "next") {
+      pkg.scripts.dev ??= "vite";
+      pkg.scripts.build ??= "vite build";
+      pkg.scripts.preview ??= "vite preview";
+    }
 
     if (language === "ts") {
       pkg.scripts.typecheck ??= "tsc -b";
