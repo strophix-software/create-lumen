@@ -212,6 +212,10 @@ test("offline smoke: shadcn UI kit scaffold (ts) is coherent", async () => {
   assert.equal(comp.tsx, true);
   assert.equal(comp.aliases.utils, "@/lib/utils");
   assert.equal(comp.aliases.ui, "@/shared/components/ui");
+  assert.equal(
+    comp.registries?.["@lumen"],
+    "https://raw.githubusercontent.com/strophix-software/lumen-registry/main/public/r"
+  );
 
   assert.ok(await exists(path.join(out, "src/lib/utils.ts")), "src/lib/utils.ts missing");
   assert.ok(await exists(path.join(out, "src/shared/components/ui/Button.tsx")), "Button.tsx missing");
