@@ -293,8 +293,18 @@ export function parseCliArgs(argv = process.argv.slice(2)) {
       "agent-docs": { type: "boolean" },
       agentDocs: { type: "boolean" },
       docker: { type: "boolean" },
+      language: { type: "string", short: "l" },
+      lang: { type: "string" },
+      css: { type: "string", short: "c" },
+      styling: { type: "string" },
+      "css-framework": { type: "string" },
+      cssFramework: { type: "string" },
+      ui: { type: "string", short: "u" },
+      uiKit: { type: "string" },
+      "ui-kit": { type: "string" },
       testing: { type: "string" },
       linter: { type: "string" },
+      formatter: { type: "string" },
       help: { type: "boolean", short: "h", default: false },
       version: { type: "boolean", short: "v", default: false },
     },
@@ -330,8 +340,17 @@ export function parseCliArgs(argv = process.argv.slice(2)) {
   const routeGroups = values["route-groups"] ?? values.routeGroups ?? null;
   const agentDocs = values["agent-docs"] ?? values.agentDocs ?? null;
   const docker = Boolean(values.docker);
+  const language = values.language || values.lang || null;
+  const cssFramework =
+    values.css ||
+    values.styling ||
+    values["css-framework"] ||
+    values.cssFramework ||
+    null;
+  const uiKit = values.ui || values.uiKit || values["ui-kit"] || null;
   const testing = values.testing ? values.testing.trim().toLowerCase() : null;
   const linter = values.linter ? values.linter.trim().toLowerCase() : null;
+  const formatter = values.formatter ? values.formatter.trim().toLowerCase() : null;
 
   return {
     projectName,
@@ -340,6 +359,9 @@ export function parseCliArgs(argv = process.argv.slice(2)) {
     template: values.template || null,
     framework: values.framework ? values.framework.trim() : null,
     arch,
+    language,
+    cssFramework,
+    uiKit,
     bundler,
     adapter,
     database,
@@ -350,6 +372,7 @@ export function parseCliArgs(argv = process.argv.slice(2)) {
     docker,
     testing,
     linter,
+    formatter,
     help: Boolean(values.help),
     version: Boolean(values.version),
     positionals,
@@ -462,13 +485,19 @@ ${chalk.bold("USAGE")}
 ${chalk.bold("OPTIONS")}
   ${chalk.yellow("-y, --yes")}              Quick setup with recommended defaults (TS + Tailwind + Router + ESLint + Prettier)
   ${chalk.yellow("-a, --arch")} <name>      Architecture preset (feature-based, type-based, none)
+  ${chalk.yellow("-l, --language")} <lang>  Language (ts, js)
+  ${chalk.yellow("-c, --css")} <framework>  Styling engine (tailwind, none)
   ${chalk.yellow("-m, --manifest")} <path>  Drive scaffolding from a lumen.config.json or inline JSON
   ${chalk.yellow("-t, --template")} <name>  Scaffold using a preset (${Object.keys(PRESETS).join(", ")})
   ${chalk.yellow("-f, --framework")} <name> Target framework (react, next, react:vite, next:app-router, etc.)
+  ${chalk.yellow("--testing")} <framework>  Testing framework (vitest, jest, none)
+  ${chalk.yellow("--linter")} <linter>      Linter (eslint, oxlint, biome, none)
+  ${chalk.yellow("--formatter")} <fmt>      Code formatter (prettier, oxfmt, none)
   ${chalk.yellow("--db, --database")} <orm> Database ORM (prisma, none)
   ${chalk.yellow("--db-provider")} <provider> Database provider (postgresql, supabase)
   ${chalk.yellow("    --docker")}           Include multi-stage Dockerfile & docker-compose for Next.js standalone
   ${chalk.yellow("--route-groups")}         Include Next.js route groups preset (public, auth, private, admin)
+  ${chalk.yellow("--agent-docs")}           Generate root AGENTS.md referencing lumen.config.json
   ${chalk.yellow("-h, --help")}             Show this help message
   ${chalk.yellow("-v, --version")}          Show version number
 

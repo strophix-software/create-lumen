@@ -52,10 +52,15 @@ export async function main(options = {}) {
     template: templateName,
     framework: frameworkArg,
     arch: archArg,
+    language: languageArg,
+    cssFramework: cssArg,
+    uiKit: uiKitArg,
     database: databaseArg,
     databaseProvider: dbProviderArg,
     docker: dockerArg,
     testing: testingArg,
+    linter: linterArg,
+    formatter: formatterArg,
     routeGroups: routeGroupsArg,
     bundler: bundlerArg,
     adapter: adapterArg,
@@ -111,6 +116,11 @@ export async function main(options = {}) {
   }
 
   // Overlay explicit CLI flags if provided
+  if (languageArg) responses.language = languageArg;
+  if (cssArg) responses.cssFramework = cssArg;
+  if (uiKitArg) responses.uiKit = uiKitArg;
+  if (linterArg) responses.linter = linterArg;
+  if (formatterArg) responses.formatter = formatterArg;
   if (databaseArg) responses.database = databaseArg;
   if (dbProviderArg) responses.databaseProvider = dbProviderArg;
   if (testingArg) responses.testing = testingArg;

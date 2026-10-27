@@ -377,3 +377,16 @@ test("cli-args: parses --route-groups boolean flag and maps manifest.routeGroups
   );
   assert.equal(reactResponses.routeGroups, undefined);
 });
+
+test("cli-args: parses --formatter, --linter, -l/--language, -c/--css flags", () => {
+  const p1 = parseCliArgs(["--formatter", "none", "--linter", "oxlint", "-l", "js", "-c", "none"]);
+  assert.equal(p1.formatter, "none");
+  assert.equal(p1.linter, "oxlint");
+  assert.equal(p1.language, "js");
+  assert.equal(p1.cssFramework, "none");
+
+  const p2 = parseCliArgs(["--formatter", "oxfmt", "--language", "ts", "--css", "tailwind"]);
+  assert.equal(p2.formatter, "oxfmt");
+  assert.equal(p2.language, "ts");
+  assert.equal(p2.cssFramework, "tailwind");
+});
