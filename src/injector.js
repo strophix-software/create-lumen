@@ -276,6 +276,7 @@ export async function injectUiKit(
   const codeExt = isTs ? "tsx" : "jsx";
   const utilExt = isTs ? "ts" : "js";
   const framework = responses.framework || responses.frameworkName || "vite";
+  const isNext = typeof framework === "object" ? framework.name === "next" : framework === "next";
 
   // 1. Write components.json
   const componentsJson = getComponentsJson({
@@ -357,7 +358,14 @@ export async function injectUiKit(
 
   try {
     await fsp.access(buttonTemplate);
-    await fsp.copyFile(buttonTemplate, buttonDest);
+    let buttonContent = await fsp.readFile(buttonTemplate, "utf8");
+    if (isNext) {
+      buttonContent = buttonContent.replace(
+        /\/\/ eslint-disable-next-line react-refresh\/only-export-components\r?\n/,
+        ""
+      );
+    }
+    await fsp.writeFile(buttonDest, buttonContent, "utf8");
   } catch {}
 
   try {

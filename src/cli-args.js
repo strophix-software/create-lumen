@@ -477,7 +477,7 @@ export function manifestToResponses(manifest, projectName) {
  */
 export function printHelp() {
   console.log(`
-${chalk.bold.cyan("  create-lumen")} — Scaffold a React + Vite project with architecture choice
+${chalk.bold.cyan("  create-lumen")} — Scaffold a React + Vite or Next.js project with architecture choice
 
 ${chalk.bold("USAGE")}
   ${chalk.green("$")} ${chalk.bold("create-lumen")} [project-name] [options]
