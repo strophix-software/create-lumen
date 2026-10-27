@@ -1,6 +1,6 @@
 # create-lumen
 
-A scaffolder that generates production-ready **React + Vite** or **Next.js** projects (App Router / Pages Router), with a choice of architecture: feature-based, type-based, hybrid, or none.
+A scaffolder that generates production-ready **React + Vite** or **Next.js** projects (App Router / Pages Router), with a choice of architecture: feature-based, type-based, or none.
 
 Note: this repository is the CLI scaffolder itself, not a generated app. Generated projects live in the target folder you create.
 
@@ -81,24 +81,27 @@ create-lumen my-app      # after npm link
 ## Features
 
 - **Two frameworks:** React + Vite (SPA) or Next.js (App Router / Pages Router) — selected interactively or via `-f`
-- Architecture choice: feature-based, type-based, hybrid, or none (per-framework availability)
-- TypeScript or JavaScript output
-- CSS frameworks: Tailwind CSS v4 (CSS-first `@theme`, v3 dropped) or none
-- **UI kit: shadcn/ui** (gated to Tailwind; primitives + `cn` helper land in the mapped `paths.ui`)
-- Optional state management: Zustand or Redux Toolkit
-- Optional router (React Router — Vite only; Next.js uses filesystem routing)
-- Optional testing: Vitest or Jest (Next.js defaults to none until a Next-native overlay is verified)
+- **Architecture choice:** feature-based, type-based, or none (scoped per framework: React + Vite supports `feature-based`, `type-based`, and `none`; Next.js supports `feature-based` and `none`)
+- **TypeScript or JavaScript output**
+- **CSS frameworks:** Tailwind CSS v4 (CSS-first `@theme`, v3 dropped) or none
+- **UI kit: shadcn/ui** (gated to Tailwind; primitives + `cn` helper land in mapped `paths.ui`; official `@lumen` registry configured in `components.json` for Shadcn Registry v2)
+- **Fullstack Next.js database scaffolding:** Prisma ORM with SQLite, PostgreSQL, and Supabase (connection pooler port 6543, direct session port 5432, `.env.example`, client singleton)
+- **Next.js Docker containerization:** multi-stage production Dockerfile targeting Next.js `output: "standalone"`, `.dockerignore`, `docker-compose.yml`
+- **Next.js Route Groups & Auth Proxy:** `--route-groups` preset scaffolds logical App Router directory segments (`(public)`, `(auth)`, `(dashboard)`) with edge auth middleware
+- **Optional state management:** Zustand or Redux Toolkit
+- **Optional router:** React Router (Vite only; Next.js uses filesystem routing)
+- **Testing:** Vitest or Jest (Next.js defaults to none until explicitly selected; zero-babel Next SWC integration)
 - **Next.js-native overlays:** server/client boundary demos + `no-server-imports-in-client` ESLint rule, `next/font` (Geist), `next/image`, filesystem routing examples, route handlers (`route.ts`) / API routes (`pages/api`)
 - **Next.js options:** `bundler: turbopack|webpack`, `adapter: node|vercel|cloudflare|static` (`next.config` overlays), `reactCompiler`, `linter: biome` — all validated against the capability model
-- Linting: ESLint (default), Oxlint, or Biome
-- Code formatter: Prettier or Oxfmt (chosen after the linter; `eslint-config-prettier` is auto-wired for the ESLint + Prettier combo)
-- Manifest v2: Emits a deterministic `lumen.config.json` validated against JSON Schema Draft 2020-12, including architecture validation modes and harness command configuration.
-- Explicit path mapping: Target directories declared for `lumen-cli` code generation
-- Optional Axios setup and icon libraries
-- Auto `git init`, generated `README` (with a project description reflecting the chosen tooling) and `LICENSE`
+- **Linting:** ESLint (default flat config), Oxlint, or Biome
+- **Code formatter & scripts:** Prettier, Oxfmt, or none (with Biome handling lint + format via `biome check --write .`); auto-wired `format`, `format:check`, and `test:watch` scripts in `package.json`
+- **Manifest v2:** Emits a deterministic `lumen.config.json` validated against JSON Schema Draft 2020-12, including architecture validation modes and harness command configuration
+- **Explicit path mapping:** Canonical target directories declared for `lumen-cli` code generation (`paths.pages` resolves to `src/app` or `src/pages` in Next.js)
+- **Optional Axios setup and icon libraries**
+- **Auto `git init`**, generated `README` (with a project description reflecting the chosen tooling) and `LICENSE`
 - `.env.example` scaffolded, and the generated `.gitignore` excludes env files (`.env`, `.env.*`) while keeping `.env.example`
-- `@/` path alias configured (`tsconfig`/`jsconfig` + Vite)
-- **Agent docs:** optional `.lumen/` context directory (project, architecture, conventions) via prompt or `--agent-docs`
+- `@/` path alias configured (`tsconfig`/`jsconfig` + Vite/Next)
+- **Agent docs:** deterministic root `AGENTS.md` referencing `lumen.config.json` as the Single Source of Truth (SSOT), providing AI agents with architecture rules, 3-tier component taxonomy, and harness commands
 
 Your selected options are cached and offered as defaults on subsequent runs.
 
@@ -214,7 +217,7 @@ src/
 ### Manifest v2 Schema (v2.0.0-alpha.1+)
 
 The manifest now includes:
-- **`architecture.preset`**: The base architecture (`feature-based`, `type-based`, `hybrid`, `none`).
+- **`architecture.preset`**: The base architecture (`feature-based`, `type-based`, `none`).
 - **`architecture.validation`**: Validation mode for `lumen doctor` (`strict`, `relaxed`, `none`).
 - **`harness.commands`**: An array of commands to run with `lumen harness` (e.g., lint, format, types, test, build), each with a name, shell command, required flag, and description.
 
@@ -231,11 +234,9 @@ The manifest now includes:
 
 ### Agent Interoperability
 
-Lumen is designed for both people and agents. When `agentDocs: true` is set in the manifest (or via the `--agent-docs` flag), `create-lumen` generates a `.lumen/` directory in the project root containing:
-- `project.json`: The resolved manifest.
-- `architecture.json`: The effective architecture preset and validation mode.
-- `conventions.md`: A markdown file documenting project-specific conventions (e.g., component naming, file organization).
-These files enable agents to understand the project without parsing the source code.
+Lumen is designed for both human developers and autonomous AI agents:
+- **`AGENTS.md`**: Scaffolds a deterministic root-level guide providing AI agents with architecture rules, 3-tier component taxonomy (`paths.ui`, `paths.components`, and feature components), harness commands, and Next.js guidelines (RSC vs `"use client"`).
+- **`lumen.config.json`**: Functions as the single source of truth (SSOT) defining canonical target paths (`paths.features`, `paths.pages`, `paths.ui`, etc.), tooling configurations, and architecture constraints without duplicating metadata into legacy `.lumen/` directories.
 
 ## Roadmap & Planning
 

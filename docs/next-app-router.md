@@ -360,9 +360,7 @@ The capability descriptor for `next:app-router` supports:
    ├── features/        # Business logic domains (e.g. auth, billing, dashboard)
    └── shared/          # Shared UI primitives, hooks, services
    ```
-2. **`hybrid`:**
-   Enables co-location of feature components alongside App Router route directories while maintaining a top-level `shared/` directory.
-3. **`none`:**
+2. **`none`:**
    Flat standard Next.js directory layout with routes located directly in `src/app/` and components in `src/components/`.
 
 ---

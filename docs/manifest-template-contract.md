@@ -35,7 +35,7 @@ The manifest is emitted at `<projectRoot>/lumen.config.json` as a UTF-8 JSON fil
     "engine": "tailwind | none"
   },
   "architecture": {
-    "type": "feature-based | type-based | hybrid | none"
+    "type": "feature-based | type-based | none"
   },
   "ui": {
     "kit": "shadcn | none"
@@ -81,12 +81,10 @@ All paths in `paths` MUST:
 | `react` | `vite` | `feature-based` | `src/features` | `src/shared/components` | `src/shared/services` | `src/shared/hooks` | `src/app/router` | `src/shared/components/ui` |
 | `react` | `vite` | `type-based` | `src/features` | `src/components` | `src/services` | `src/hooks` | `src/pages` | `src/ui` |
 | `react` | `vite` | `none` | `src` | `src/components` | `src/services` | `src/hooks` | `src/pages` | `src/components/ui` |
-| `next` | `app-router` | `feature-based` | `src/features` | `src/shared/components` | `src/shared/services` | `src/shared/hooks` | `app` | `src/shared/components/ui` |
-| `next` | `app-router` | `hybrid` | `src/features` | `src/shared/components` | `src/shared/services` | `src/shared/hooks` | `app` | `src/shared/components/ui` |
-| `next` | `app-router` | `none` | `src` | `src/components` | `src/services` | `src/hooks` | `app` | `src/components/ui` |
-| `next` | `pages-router` | `feature-based` | `src/features` | `src/shared/components` | `src/shared/services` | `src/shared/hooks` | `pages` | `src/shared/components/ui` |
-| `next` | `pages-router` | `hybrid` | `src/features` | `src/shared/components` | `src/shared/services` | `src/shared/hooks` | `pages` | `src/shared/components/ui` |
-| `next` | `pages-router` | `none` | `src` | `src/components` | `src/services` | `src/hooks` | `pages` | `src/components/ui` |
+| `next` | `app-router` | `feature-based` | `src/features` | `src/shared/components` | `src/shared/services` | `src/shared/hooks` | `src/app` | `src/shared/components/ui` |
+| `next` | `app-router` | `none` | `src` | `src/components` | `src/services` | `src/hooks` | `src/app` | `src/components/ui` |
+| `next` | `pages-router` | `feature-based` | `src/features` | `src/shared/components` | `src/shared/services` | `src/shared/hooks` | `src/pages` | `src/shared/components/ui` |
+| `next` | `pages-router` | `none` | `src` | `src/components` | `src/services` | `src/hooks` | `src/pages` | `src/components/ui` |
 
 > [!NOTE]
 > `lumen-cli` reads generator targets strictly from `paths` and never hardcodes `src/components` or `src/features`.

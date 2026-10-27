@@ -382,7 +382,7 @@ The Pages Router variant supports:
 
 ## 8. Architecture Presets & Path Mappings
 
-`create-lumen` v2 supports three architecture presets for Next.js Pages Router:
+`create-lumen` v2 supports two architecture presets for Next.js Pages Router:
 
 1. **`feature-based`:**
    ```
@@ -391,9 +391,7 @@ The Pages Router variant supports:
    ├── features/        # Feature domains (components, hooks, models)
    └── shared/          # Reusable shared UI, utilities, and services
    ```
-2. **`hybrid`:**
-   Enables co-location of component files alongside routes while preserving feature directories.
-3. **`none`:**
+2. **`none`:**
    Standard Next.js structure with `src/pages/` and `src/components/`.
 
 ---

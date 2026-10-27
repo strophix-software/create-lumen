@@ -24,7 +24,7 @@
     "components": "src/shared/components",
     "services": "src/shared/services",
     "hooks": "src/shared/hooks",
-    "pages": "app",
+    "pages": "src/app",
     "ui": "src/shared/components/ui"
   },
   "tooling": {
