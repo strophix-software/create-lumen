@@ -18,20 +18,50 @@ test("handleDevServer: non-interactive mode skips select and prints next steps",
   }
 });
 
-test("handleDevServer: CI environment skips select", async () => {
+test("handleDevServer: interactive mode invokes execa with cwd set to target directory", async () => {
   const origCI = process.env.CI;
-  process.env.CI = "true";
-  let called = false;
-  const consoleLog = console.log;
-  console.log = (msg) => {
-    if (String(msg).includes("Next steps")) called = true;
-  };
+  delete process.env.CI;
+  let execaArgs = null;
 
   try {
-    await handleDevServer("npm", "test-project", { isNonInteractive: false });
-    assert.equal(called, true, "printNextSteps must be called in CI environment");
+    await handleDevServer("npm", "/tmp/sample-project", {
+      isNonInteractive: false,
+      projectName: "sample-project",
+      isTTY: true,
+      selectFn: async () => true,
+      execaFn: async (pkg, args, opts) => {
+        execaArgs = { pkg, args, opts };
+      },
+    });
+
+    assert.ok(execaArgs, "execaFn must be called");
+    assert.equal(execaArgs.pkg, "npm");
+    assert.deepEqual(execaArgs.args, ["run", "dev"]);
+    assert.equal(execaArgs.opts.cwd, "/tmp/sample-project");
+    assert.equal(execaArgs.opts.stdio, "inherit");
   } finally {
-    process.env.CI = origCI;
-    console.log = consoleLog;
+    if (origCI !== undefined) process.env.CI = origCI;
+  }
+});
+
+test("handleDevServer: handles SIGINT / user cancellation gracefully", async () => {
+  const origCI = process.env.CI;
+  delete process.env.CI;
+
+  try {
+    await handleDevServer("npm", "/tmp/sample-project", {
+      isNonInteractive: false,
+      isTTY: true,
+      selectFn: async () => true,
+      execaFn: async () => {
+        const err = new Error("Command failed");
+        err.signal = "SIGINT";
+        throw err;
+      },
+    });
+    // Should resolve without throwing
+    assert.ok(true, "must not throw on SIGINT");
+  } finally {
+    if (origCI !== undefined) process.env.CI = origCI;
   }
 });

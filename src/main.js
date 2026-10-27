@@ -362,5 +362,5 @@ export async function main(options = {}) {
   );
 
   // 14. Offer dev server
-  await handleDevServer(pkg, projectName, { isNonInteractive });
+  await handleDevServer(pkg, projectPath, { isNonInteractive, projectName });
 }

@@ -1,14 +1,30 @@
 import { isCancel, select } from "@clack/prompts";
 import chalk from "chalk";
 import { execa } from "execa";
+import path from "path";
 
-export async function handleDevServer(pkg, projectName, { isNonInteractive = false } = {}) {
-  if (isNonInteractive || process.env.CI || !process.stdin.isTTY) {
-    printNextSteps(projectName, pkg);
+export async function handleDevServer(
+  pkg,
+  projectPathOrName,
+  {
+    isNonInteractive = false,
+    projectName = null,
+    selectFn = select,
+    execaFn = execa,
+    isTTY = process.stdin.isTTY,
+  } = {}
+) {
+  const targetDir = path.isAbsolute(projectPathOrName)
+    ? projectPathOrName
+    : path.resolve(process.cwd(), projectPathOrName);
+  const displayName = projectName || path.basename(projectPathOrName);
+
+  if (isNonInteractive || process.env.CI || !isTTY) {
+    printNextSteps(displayName, pkg);
     return;
   }
 
-  const startDev = await select({
+  const startDev = await selectFn({
     message: "Start the development server?",
     options: [
       { label: "Yes", value: true },
@@ -18,22 +34,33 @@ export async function handleDevServer(pkg, projectName, { isNonInteractive = fal
   });
 
   if (isCancel(startDev)) {
-    printNextSteps(projectName, pkg);
+    printNextSteps(displayName, pkg);
     return;
   }
 
   if (startDev) {
     console.log(chalk.green("\nStarting dev server...\n"));
-    await execa(pkg, ["run", "dev"], { stdio: "inherit" });
+    try {
+      await execaFn(pkg, ["run", "dev"], { cwd: targetDir, stdio: "inherit" });
+    } catch (err) {
+      if (
+        err?.signal === "SIGINT" ||
+        err?.signal === "SIGTERM" ||
+        err?.exitCode === 130
+      ) {
+        return;
+      }
+      throw err;
+    }
   } else {
-    printNextSteps(projectName, pkg);
+    printNextSteps(displayName, pkg);
   }
 }
 
-function printNextSteps(projectName, pkg) {
+function printNextSteps(displayName, pkg) {
   console.log(chalk.bold("\nNext steps:"));
-  if (projectName !== ".") {
-    console.log(chalk.gray(`  cd ${projectName}`));
+  if (displayName !== "." && displayName !== "") {
+    console.log(chalk.gray(`  cd ${displayName}`));
   }
   console.log(chalk.gray(`  ${pkg} run dev\n`));
 }
