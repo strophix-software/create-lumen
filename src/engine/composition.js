@@ -384,6 +384,7 @@ export function resolveFragments(responses = {}, templatesDir) {
         "db:push": "prisma db push",
         "db:seed": "prisma db seed",
         "db:studio": "prisma studio",
+        postinstall: "prisma generate",
       },
       action: async ({ projectPath, templatesDir: tDir }) => {
         const prismaTplDir = path.join(tDir, "conditional", "database", "prisma");
@@ -752,6 +753,9 @@ export function resolveFragments(responses = {}, templatesDir) {
         } catch {}
         try {
           await fsp.rm(path.join(projectPath, "src", "app", "page.tsx"), { force: true });
+        } catch {}
+        try {
+          await fsp.rm(path.join(projectPath, "src", "app", "page.module.css"), { force: true });
         } catch {}
         // Adjust existing test file if it imported @/app/page before route groups was applied
         for (const testExt of ["tsx", "jsx", "ts", "js"]) {

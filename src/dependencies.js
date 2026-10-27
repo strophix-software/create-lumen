@@ -34,6 +34,13 @@ export async function installAllDeps(responses, pkg, cwd) {
   for (const batch of devDepBatches) {
     await installDeps(pkg, true, batch, cwd);
   }
+
+  if (responses.database === "prisma") {
+    try {
+      const runner = pkg === "npm" ? "npx" : pkg;
+      await execa(runner, ["prisma", "generate"], { cwd, stdio: "pipe" });
+    } catch {}
+  }
 }
 
 // Pure dependency computation — the package list for a given matrix cell,

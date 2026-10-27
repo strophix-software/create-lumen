@@ -24,14 +24,25 @@ export async function setupCssFramework({
   // framework is "none"); type-based imports ./styles/globals.css (or
   // main.css). The chosen framework's styles land in the file the architecture
   // actually imports.
-  const stylesDir =
-    architecture === "feature-based"
-      ? path.join(projectPath, "src", "shared", "styles")
-      : path.join(projectPath, "src", "styles");
+  let stylesDir;
+  if (fw.name === "next") {
+    stylesDir =
+      fw.variant === "pages-router"
+        ? path.join(projectPath, "src", "styles")
+        : path.join(projectPath, "src", "app");
+  } else {
+    stylesDir =
+      architecture === "feature-based"
+        ? path.join(projectPath, "src", "shared", "styles")
+        : path.join(projectPath, "src", "styles");
+  }
 
   // Vanilla CSS gets a stylesheet named main.css; tailwind keeps
   // globals.css (its idiomatic name — it injects framework directives).
   const mainFileName = cssFramework === "none" ? "main.css" : "globals.css";
+
+  // Ensure the styles dir exists
+  await fsp.mkdir(stylesDir, { recursive: true });
 
   async function writeCss(content, fileName) {
     await fsp.writeFile(path.join(stylesDir, fileName), content, "utf8");
