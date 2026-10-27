@@ -32,6 +32,8 @@ export function defaultHarnessCommands(tooling = {}, testing = null) {
   }
   if (formatter && formatter !== "none" && FORMAT_COMMANDS[formatter]) {
     commands.push({ name: "format", command: FORMAT_COMMANDS[formatter], required: true });
+  } else if (linter === "biome" && (!formatter || formatter === "none" || formatter === "biome")) {
+    commands.push({ name: "format", command: "biome check --write .", required: true });
   }
   if (language === "ts") {
     commands.push({ name: "types", command: "tsc -b", required: true });

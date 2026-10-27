@@ -462,7 +462,7 @@ export function resolveFragments(responses = {}, templatesDir) {
     const testingDir = path.join(templatesDir, "conditional", "testing", testingFramework);
     const testScripts =
       testingFramework === "vitest"
-        ? { test: "vitest", "test:run": "vitest run" }
+        ? { test: "vitest", "test:run": "vitest run", "test:watch": "vitest" }
         : { test: "jest", "test:watch": "jest --watch" };
 
     fragments.push({
@@ -592,14 +592,24 @@ export function resolveFragments(responses = {}, templatesDir) {
       },
     });
   } else if (responses.linter === "biome") {
+    const isBiomeFormatter =
+      !responses.formatter ||
+      responses.formatter === "none" ||
+      responses.formatter === "biome";
+    const biomeScripts = {
+      lint: "biome check .",
+      "lint:fix": "biome check --write .",
+    };
+    if (isBiomeFormatter) {
+      biomeScripts.format = "biome check --write .";
+      biomeScripts["format:check"] = "biome check .";
+    }
+
     fragments.push({
       scope: FRAGMENT_SCOPES.TOOLING,
       category: "linter",
       id: "tooling:linter:biome",
-      scripts: {
-        lint: "biome check .",
-        "lint:fix": "biome check --write .",
-      },
+      scripts: biomeScripts,
       action: async ({ projectPath }) => {
         const configSrc = path.join(templatesDir, "conditional", "linting", "biome", "biome.json");
         try {
