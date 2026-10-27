@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [2.0.0-beta.6] — 2026-10-27
+
 ### Fixed
 
 - **Omit `middleware.ts` in Next.js 16 when `proxy.ts` is generated** (#70) — Next.js 16.4+ (Turbopack) throws a fatal error if both `middleware.ts` and `proxy.ts` are detected. Route groups preset now exclusively emits `src/proxy.ts` / `src/proxy.js` with `proxy` and `config` exports and cleans up any conflicting `middleware` files.
