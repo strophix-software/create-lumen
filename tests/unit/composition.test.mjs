@@ -456,7 +456,14 @@ test("composition: Next.js with Prisma ORM scaffolds schema, client, seed, scrip
     assert.equal(pkg.scripts["db:push"], "prisma db push");
     assert.equal(pkg.scripts["db:seed"], "prisma db seed");
     assert.equal(pkg.scripts["db:studio"], "prisma studio");
-    assert.equal(pkg.prisma?.seed, "tsx prisma/seed.ts");
+    assert.equal(pkg.prisma, undefined, "package.json should not contain deprecated prisma key (#75)");
+
+    // 4b. prisma.config.ts exists and specifies defineConfig with earlyAccess and seed (#75)
+    assert.ok(await fsp.stat(path.join(dir, "prisma.config.ts")).catch(() => false));
+    const prismaConfig = await fsp.readFile(path.join(dir, "prisma.config.ts"), "utf8");
+    assert.ok(prismaConfig.includes("defineConfig"));
+    assert.ok(prismaConfig.includes("earlyAccess: true"));
+    assert.ok(prismaConfig.includes('seed: "tsx prisma/seed.ts"'));
 
     // 5. .env.example contains DATABASE_URL and DIRECT_URL
     const envContent = await fsp.readFile(path.join(dir, ".env.example"), "utf8");
@@ -489,7 +496,13 @@ test("composition: Next.js with Prisma ORM in JS scaffolds db.js and seed.js", a
     assert.ok(await fsp.stat(path.join(dir, "src", "lib", "db.js")).catch(() => false));
 
     const pkg = JSON.parse(await fsp.readFile(path.join(dir, "package.json"), "utf8"));
-    assert.equal(pkg.prisma?.seed, "node prisma/seed.js");
+    assert.equal(pkg.prisma, undefined, "package.json should not contain deprecated prisma key (#75)");
+
+    assert.ok(await fsp.stat(path.join(dir, "prisma.config.js")).catch(() => false));
+    const prismaConfig = await fsp.readFile(path.join(dir, "prisma.config.js"), "utf8");
+    assert.ok(prismaConfig.includes("defineConfig"));
+    assert.ok(prismaConfig.includes("earlyAccess: true"));
+    assert.ok(prismaConfig.includes('seed: "node prisma/seed.js"'));
   } finally {
     await fsp.rm(dir, { recursive: true, force: true });
   }
