@@ -548,6 +548,10 @@ export async function getUserInputs(
     {
       id: "stateManagement",
       message: "Which state management library do you want to use?",
+      skip: (ans) => ans.architecture === "none",
+      onSkip: (ans) => {
+        ans.stateManagement = "none";
+      },
       getOptions: () => [
         { label: "None", value: "none" },
         { label: "Redux Toolkit", value: "redux" },

@@ -390,3 +390,17 @@ test("cli-args: parses --formatter, --linter, -l/--language, -c/--css flags", ()
   assert.equal(p2.language, "ts");
   assert.equal(p2.cssFramework, "tailwind");
 });
+
+test("cli-args: parses -s/--state and --state-management flags", () => {
+  const p1 = parseCliArgs(["-s", "zustand"]);
+  assert.equal(p1.stateManagement, "zustand");
+
+  const p2 = parseCliArgs(["--state", "redux"]);
+  assert.equal(p2.stateManagement, "redux");
+
+  const p3 = parseCliArgs(["--state-management", "rtk"]);
+  assert.equal(p3.stateManagement, "redux");
+
+  const p4 = parseCliArgs([]);
+  assert.equal(p4.stateManagement, null);
+});

@@ -54,6 +54,7 @@ export async function main(options = {}) {
     arch: archArg,
     language: languageArg,
     cssFramework: cssArg,
+    stateManagement: stateArg,
     uiKit: uiKitArg,
     database: databaseArg,
     databaseProvider: dbProviderArg,
@@ -118,6 +119,7 @@ export async function main(options = {}) {
   // Overlay explicit CLI flags if provided
   if (languageArg) responses.language = languageArg;
   if (cssArg) responses.cssFramework = cssArg;
+  if (stateArg) responses.stateManagement = stateArg;
   if (uiKitArg) responses.uiKit = uiKitArg;
   if (linterArg) responses.linter = linterArg;
   if (formatterArg) responses.formatter = formatterArg;

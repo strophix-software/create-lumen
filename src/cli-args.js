@@ -299,6 +299,9 @@ export function parseCliArgs(argv = process.argv.slice(2)) {
       styling: { type: "string" },
       "css-framework": { type: "string" },
       cssFramework: { type: "string" },
+      state: { type: "string", short: "s" },
+      "state-management": { type: "string" },
+      stateManagement: { type: "string" },
       ui: { type: "string", short: "u" },
       uiKit: { type: "string" },
       "ui-kit": { type: "string" },
@@ -348,6 +351,11 @@ export function parseCliArgs(argv = process.argv.slice(2)) {
     values.cssFramework ||
     null;
   const uiKit = values.ui || values.uiKit || values["ui-kit"] || null;
+  let stateManagement = values.state || values["state-management"] || values.stateManagement || null;
+  if (stateManagement) {
+    stateManagement = stateManagement.trim().toLowerCase();
+    if (stateManagement === "rtk" || stateManagement === "reduxtoolkit") stateManagement = "redux";
+  }
   const testing = values.testing ? values.testing.trim().toLowerCase() : null;
   const linter = values.linter ? values.linter.trim().toLowerCase() : null;
   const formatter = values.formatter ? values.formatter.trim().toLowerCase() : null;
@@ -361,6 +369,7 @@ export function parseCliArgs(argv = process.argv.slice(2)) {
     arch,
     language,
     cssFramework,
+    stateManagement,
     uiKit,
     bundler,
     adapter,
@@ -487,6 +496,7 @@ ${chalk.bold("OPTIONS")}
   ${chalk.yellow("-a, --arch")} <name>      Architecture preset (feature-based, type-based, none)
   ${chalk.yellow("-l, --language")} <lang>  Language (ts, js)
   ${chalk.yellow("-c, --css")} <framework>  Styling engine (tailwind, none)
+  ${chalk.yellow("-s, --state")} <lib>        State management (zustand, redux, none)
   ${chalk.yellow("-m, --manifest")} <path>  Drive scaffolding from a lumen.config.json or inline JSON
   ${chalk.yellow("-t, --template")} <name>  Scaffold using a preset (${Object.keys(PRESETS).join(", ")})
   ${chalk.yellow("-f, --framework")} <name> Target framework (react, next, react:vite, next:app-router, etc.)

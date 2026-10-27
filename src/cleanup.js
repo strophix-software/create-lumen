@@ -35,7 +35,9 @@ export async function cleanupBoilerplate(projectPath, responses = {}) {
       await deleteIfExists(`${projectPath}/src/app/App.jsx`);
       await deleteIfExists(`${projectPath}/src/app/hooks`);
       await deleteIfExists(`${projectPath}/src/app/contexts`);
-      await deleteIfExists(`${projectPath}/src/app/providers`);
+      if (responses?.stateManagement !== "redux") {
+        await deleteIfExists(`${projectPath}/src/app/providers`);
+      }
     }
   }
 }
