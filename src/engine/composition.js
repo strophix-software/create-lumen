@@ -419,15 +419,27 @@ export function resolveFragments(responses = {}, templatesDir) {
           await fsp.copyFile(dbSrc, dbDest);
         } catch {}
 
-        // Configure prisma.seed in package.json
+        // Copy prisma.config.ts or prisma.config.js to project root (#75)
+        const configFileName = language === "ts" ? "prisma.config.ts" : "prisma.config.js";
+        const configSrc = path.join(prismaTplDir, configFileName);
+        const configDest = path.join(projectPath, configFileName);
+        try {
+          await fsp.access(configSrc);
+          await fsp.copyFile(configSrc, configDest);
+        } catch {
+          const configCode = `import { defineConfig } from "@prisma/config";\n\nexport default defineConfig({\n  earlyAccess: true,\n  schema: "prisma/schema.prisma",\n  migrations: {\n    seed: "${language === "ts" ? "tsx prisma/seed.ts" : "node prisma/seed.js"}",\n  },\n});\n`;
+          await fsp.writeFile(configDest, configCode, "utf8");
+        }
+
+        // Remove deprecated package.json#prisma field if present (#75)
         const pkgPath = path.join(projectPath, "package.json");
         try {
           const content = await fsp.readFile(pkgPath, "utf8");
           const pkg = JSON.parse(content);
-          pkg.prisma = {
-            seed: language === "ts" ? "tsx prisma/seed.ts" : "node prisma/seed.js",
-          };
-          await fsp.writeFile(pkgPath, JSON.stringify(pkg, null, 2) + "\n", "utf8");
+          if (pkg.prisma) {
+            delete pkg.prisma;
+            await fsp.writeFile(pkgPath, JSON.stringify(pkg, null, 2) + "\n", "utf8");
+          }
         } catch {}
 
         // Append DATABASE_URL and DIRECT_URL to .env.example
