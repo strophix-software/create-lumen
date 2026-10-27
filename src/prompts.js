@@ -24,8 +24,6 @@ export function formatConfig(responses) {
       ? "Feature-based"
       : responses.architecture === "type-based" || responses.architecture === "component-based"
       ? "Type-based"
-      : responses.architecture === "hybrid"
-      ? "Hybrid (shared + features)"
       : responses.architecture === "none"
       ? "None (flat src)"
       : responses.architecture;
@@ -72,7 +70,8 @@ export function formatConfig(responses) {
     lines.push(`• ${chalk.bold("Adapter:")} ${chalk.cyan(responses.adapter)}`);
   }
   if (responses.database && responses.database !== "none") {
-    lines.push(`• ${chalk.bold("Database:")} ${chalk.cyan(responses.database === "prisma" ? "Prisma ORM" : responses.database)}`);
+    const providerLabel = responses.databaseProvider === "supabase" ? " (Supabase)" : " (PostgreSQL)";
+    lines.push(`• ${chalk.bold("Database:")} ${chalk.cyan(responses.database === "prisma" ? `Prisma ORM${providerLabel}` : responses.database)}`);
   }
   if (responses.reactCompiler !== undefined) {
     lines.push(`• ${chalk.bold("React Compiler:")} ${responses.reactCompiler ? chalk.green("Yes") : chalk.red("No")}`);
@@ -361,11 +360,6 @@ export async function getUserInputs(
             hint: "Small apps / component libraries — code grouped by UI type",
           },
           {
-            label: "Hybrid",
-            value: "hybrid",
-            hint: "Next.js: features + shared code",
-          },
-          {
             label: "None",
             value: "none",
             hint: "Minimal flat src/ scaffold — no imposed structure",
@@ -490,6 +484,27 @@ export async function getUserInputs(
           { label: "None", value: "none" },
         ]),
       defaultInitial: "none",
+    },
+    {
+      id: "databaseProvider",
+      skip: (ans) => !isPromptVisible(framework, "database") || ans.database !== "prisma",
+      onSkip: (ans) => {
+        ans.databaseProvider = ans.database === "prisma" ? (ans.databaseProvider || "postgresql") : undefined;
+      },
+      message: "Which database provider do you want to configure?",
+      getOptions: () => [
+        {
+          label: "PostgreSQL",
+          value: "postgresql",
+          hint: "Standard PostgreSQL / Docker compose",
+        },
+        {
+          label: "Supabase",
+          value: "supabase",
+          hint: "PostgreSQL with connection pooling & direct migration URL",
+        },
+      ],
+      defaultInitial: "postgresql",
     },
     {
       id: "reactCompiler",
@@ -682,6 +697,7 @@ export async function getUserInputs(
     bundler,
     adapter,
     database,
+    databaseProvider,
     reactCompiler,
     routeGroups,
     agentDocs,
@@ -704,6 +720,7 @@ export async function getUserInputs(
   }
   if (database !== undefined && database !== "none") {
     finalResponses.database = database;
+    finalResponses.databaseProvider = databaseProvider || "postgresql";
   }
   if (reactCompiler !== undefined) {
     finalResponses.reactCompiler = reactCompiler;

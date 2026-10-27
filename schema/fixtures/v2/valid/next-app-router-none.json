@@ -22,7 +22,7 @@
     "components": "src/components",
     "services": "src/services",
     "hooks": "src/hooks",
-    "pages": "app",
+    "pages": "src/app",
     "ui": "src/components/ui"
   },
   "tooling": {

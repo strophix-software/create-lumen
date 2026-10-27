@@ -17,7 +17,6 @@ export async function setupCssFramework({
   pkg: _pkg,
   framework = "vite",
 }) {
-  process.chdir(projectPath);
   const fw = normalizeFramework(framework);
   const isFilesystemRouted = hasCapability(fw, CAPABILITIES.FILESYSTEM_ROUTING);
   const cssDir = path.join(templatesDir, "css");
@@ -26,7 +25,7 @@ export async function setupCssFramework({
   // main.css). The chosen framework's styles land in the file the architecture
   // actually imports.
   const stylesDir =
-    architecture === "feature-based" || architecture === "hybrid"
+    architecture === "feature-based"
       ? path.join(projectPath, "src", "shared", "styles")
       : path.join(projectPath, "src", "styles");
 
@@ -100,11 +99,11 @@ async function syncMainCssImport(projectPath, ext, architecture, mainFileName) {
   try {
     let content = await fsp.readFile(mainPath, "utf8");
     const expected =
-      architecture === "feature-based" || architecture === "hybrid"
+      architecture === "feature-based"
         ? `./shared/styles/${mainFileName}`
         : `./styles/${mainFileName}`;
     const wrong =
-      architecture === "feature-based" || architecture === "hybrid"
+      architecture === "feature-based"
         ? /import ['"]\.\/shared\/styles\/(globals|main)\.css['"]/
         : /import ['"]\.\/styles\/(globals|main)\.css['"]/;
     content = content.replace(wrong, `import '${expected}'`);

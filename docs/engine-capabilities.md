@@ -23,10 +23,9 @@
    - [Cartesian Matrix vs Composable Fragments](#cartesian-matrix-vs-composable-fragments)
    - [Layered Assembly Pipeline](#layered-assembly-pipeline)
    - [Hermetic & Deterministic Generation](#hermetic--deterministic-generation)
-5. [Architecture Presets (`none` and `hybrid`)](#5-architecture-presets-none-and-hybrid)
+5. [Architecture Presets (`feature-based`, `type-based`, `none`)](#5-architecture-presets-feature-based-type-based-none)
    - [Preset Matrix](#preset-matrix)
    - [The `none` Architecture Preset](#the-none-architecture-preset)
-   - [The `hybrid` Architecture Preset](#the-hybrid-architecture-preset)
    - [Path Mappings & Validation Modes](#path-mappings--validation-modes)
 6. [shadcn/ui Integration Guide](#6-shadcnui-integration-guide)
    - [Tailwind CSS v4 CSS-First Theming](#tailwind-css-v4-css-first-theming)
@@ -134,7 +133,7 @@ export const FRAMEWORK_CAPABILITIES = {
       CAPABILITIES.NEXT_IMAGE,
       CAPABILITIES.AGENT_DOCS,
     ],
-    allowedArchitectures: ["feature-based", "hybrid", "none"],
+    allowedArchitectures: ["feature-based", "none"],
     allowedStyling: ["tailwind", "none"],
     allowedUiKits: ["shadcn", "none"],
     allowedLanguages: ["ts", "js"],
@@ -156,7 +155,7 @@ export const FRAMEWORK_CAPABILITIES = {
       CAPABILITIES.NEXT_IMAGE,
       CAPABILITIES.AGENT_DOCS,
     ],
-    allowedArchitectures: ["feature-based", "hybrid", "none"],
+    allowedArchitectures: ["feature-based", "none"],
     allowedStyling: ["tailwind", "none"],
     allowedUiKits: ["shadcn", "none"],
     allowedLanguages: ["ts", "js"],
@@ -353,9 +352,9 @@ Per [ADR 0001](./adr/0001-scaffolder-base-strategy.md), no external scaffolder C
 
 ---
 
-## 5. Architecture Presets (`none` and `hybrid`)
+## 5. Architecture Presets (`feature-based`, `type-based`, `none`)
 
-Lumen supports four first-class architecture presets, configured via `architecture.preset` in `lumen.config.json`.
+Lumen supports three first-class architecture presets, configured via `architecture.preset` in `lumen.config.json` and scoped per framework.
 
 ### Preset Matrix
 
@@ -363,7 +362,6 @@ Lumen supports four first-class architecture presets, configured via `architectu
 | :--- | :--- | :--- | :--- |
 | **`feature-based`** | React+Vite, Next.js | Large, scalable enterprise applications | Code co-located by business domain in `src/features/<domain>/` with a shared kernel. |
 | **`type-based`** | React+Vite | Small applications, UI component libraries | Technical layer groupings (`src/components/`, `src/hooks/`, `src/services/`). |
-| **`hybrid`** | Next.js | Modern full-stack apps with central shared UI | Feature slices alongside centralized layout and shared UI components. |
 | **`none`** | React+Vite, Next.js | Minimalist prototypes, micro-frontends | Flat, un-nested structure without architectural abstraction layers. |
 
 ### The `none` Architecture Preset
@@ -379,7 +377,7 @@ my-app/
 ├── vite.config.ts
 ├── lumen.config.json
 └── src/
-    ├── App.tsx          # Minimal single-file application shell
+    ├── App.tsx          # Minimal single-file application shell (React)
     ├── main.tsx         # Framework entrypoint
     └── styles/
         ├── globals.css  # Tailwind v4 directives
@@ -392,45 +390,13 @@ my-app/
   ```json
   "paths": {
     "features": "src",
-    "components": "src",
-    "services": "src",
-    "hooks": "src",
-    "pages": "src",
-    "ui": "src"
+    "components": "src/components",
+    "services": "src/services",
+    "hooks": "src/hooks",
+    "pages": "src/pages",
+    "ui": "src/components/ui"
   }
   ```
-
-### The `hybrid` Architecture Preset
-
-The `hybrid` preset is tailored for Next.js applications and modern full-stack web applications. It strikes a balance between domain encapsulation and centralized UI primitives:
-
-```
-my-app/
-├── app/                        # Next.js App Router (pages, layouts, route handlers)
-│   ├── layout.tsx
-│   └── page.tsx
-├── lumen.config.json
-└── src/
-    ├── features/               # Feature domain modules
-    │   ├── billing/
-    │   │   ├── components/
-    │   │   ├── hooks/
-    │   │   └── services/
-    │   └── auth/
-    ├── shared/                 # Centralized cross-cutting domain logic
-    │   ├── components/
-    │   │   └── ui/             # Centralized design system (shadcn/ui primitives)
-    │   ├── hooks/
-    │   └── services/
-    └── styles/
-        ├── globals.css
-        └── themes.css
-```
-
-#### Key Advantages:
-- Retains Next.js routing conventions in `app/` or `pages/`.
-- Places domain logic into self-contained feature slices (`src/features/`).
-- Prevents UI component duplication by providing a centralized `src/shared/components/ui` directory for design system primitives.
 
 ### Path Mappings & Validation Modes
 

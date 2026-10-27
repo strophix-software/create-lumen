@@ -74,16 +74,16 @@ interface StylingConfig {
 
 ```typescript
 interface ArchitectureConfig {
-  preset?: "feature-based" | "type-based" | "hybrid" | "none"; // Canonical key
-  type?: "feature-based" | "type-based" | "hybrid" | "none";   // Legacy alias, kept in sync
-  validation?: "strict" | "relaxed" | "none";                 // Default: "strict"
+  preset?: "feature-based" | "type-based" | "none"; // Canonical key
+  type?: "feature-based" | "type-based" | "none";   // Legacy alias, kept in sync
+  validation?: "strict" | "relaxed" | "none";       // Default: "strict"
 }
 ```
 
 *Constraints:*
 - At least one of `preset` / `type` MUST be defined; when both are present they MUST match (`preset === type`).
 - `parseManifest()` normalizes the result to always expose `{ preset, type, validation }` with `validation` defaulting to `"strict"`.
-- Allowed values are scoped per framework: React+Vite `feature-based | type-based | none`; Next.js `feature-based | hybrid | none`.
+- Allowed values are scoped per framework: React+Vite `feature-based | type-based | none`; Next.js `feature-based | none`.
 - `validation` controls how strictly `lumen-cli` enforces the architecture layout (`strict` = fail on drift, `relaxed` = warn, `none` = skip).
 
 #### UI (`ui`)
@@ -150,10 +150,11 @@ interface PathsConfig {
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **React + Vite** | `feature-based` | `src/features` | `src/shared/components` | `src/shared/services` | `src/shared/hooks` | `src/app/router` | `src/shared/components/ui` |
 | **React + Vite** | `type-based` | `src/features` | `src/components` | `src/services` | `src/hooks` | `src/pages` | `src/ui` |
-| **React + Vite** | `none` | `src` | `src` | `src` | `src` | `src` | `src` |
-| **Next.js (App)** | `feature-based` | `src/features` | `src/shared/components` | `src/shared/services` | `src/shared/hooks` | `app` | `src/shared/components/ui` |
-| **Next.js (App)** | `hybrid` | `src/features` | `src/shared/components` | `src/shared/services` | `src/shared/hooks` | `app` | `src/shared/components/ui` |
-| **Next.js (Pages)**| `feature-based` | `src/features` | `src/shared/components` | `src/shared/services` | `src/shared/hooks` | `pages` | `src/shared/components/ui` |
+| **React + Vite** | `none` | `src` | `src/components` | `src/services` | `src/hooks` | `src/pages` | `src/components/ui` |
+| **Next.js (App)** | `feature-based` | `src/features` | `src/shared/components` | `src/shared/services` | `src/shared/hooks` | `src/app` | `src/shared/components/ui` |
+| **Next.js (App)** | `none` | `src` | `src/components` | `src/services` | `src/hooks` | `src/app` | `src/components/ui` |
+| **Next.js (Pages)**| `feature-based` | `src/features` | `src/shared/components` | `src/shared/services` | `src/shared/hooks` | `src/pages` | `src/shared/components/ui` |
+| **Next.js (Pages)**| `none` | `src` | `src/components` | `src/services` | `src/hooks` | `src/pages` | `src/components/ui` |
 
 ### Consumer Rule:
 Generators in `lumen-cli` MUST construct file paths by prepending project root to `manifest.paths.<target>`. No hardcoded `'src/components'` or assumptions about layout may be made in generator implementations.

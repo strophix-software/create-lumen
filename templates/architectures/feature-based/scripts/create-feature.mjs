@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-import fs from "fs";
-import path from "path";
+import fs from "node:fs";
+import path from "node:path";
 
 // 1. Get feature name from CLI args
 const featureName = process.argv[2];

@@ -2,9 +2,30 @@ import { promises as fsp } from "fs";
 import path from "path";
 import { readFileContent } from "@/utils/fs.js";
 import { getPathAliases, getViteAliases } from "@/aliases.js";
+import { normalizeFramework } from "@/engine/capabilities.js";
 
-export async function configureProject(projectPath, language, cssFramework) {
+export async function configureProject(projectPath, languageOrResponses, cssFramework, framework = "vite") {
+  let language = languageOrResponses;
+  let css = cssFramework;
+  let fwArg = framework;
+  if (languageOrResponses && typeof languageOrResponses === "object") {
+    language = languageOrResponses.language;
+    css = languageOrResponses.cssFramework;
+    fwArg =
+      languageOrResponses.framework || {
+        name: languageOrResponses.frameworkName,
+        variant: languageOrResponses.frameworkVariant,
+      };
+  }
+  const fw = normalizeFramework(fwArg);
   const ext = language === "ts" ? "ts" : "js";
+
+  if (fw.name === "next") {
+    // Next.js ships its own tsconfig.json with next plugins and paths.
+    // Skip Vite tsconfig.app.json and vite.config mutations.
+    await configurePackageJson(projectPath, language, fw);
+    return;
+  }
 
   // Set up tsconfig/jsconfig with the @/* path alias
   if (language === "ts") {
@@ -14,12 +35,12 @@ export async function configureProject(projectPath, language, cssFramework) {
   }
 
   // Add path aliases to vite.config for non-tailwind setups
-  if (cssFramework !== "tailwind") {
+  if (css !== "tailwind") {
     await addPathAliasesToViteConfig(projectPath, ext);
   }
 
   // Add scripts to package.json
-  await configurePackageJson(projectPath, language);
+  await configurePackageJson(projectPath, language, fw);
 }
 
 async function configureTsconfig(projectPath) {
@@ -158,7 +179,8 @@ async function addPathAliasesToViteConfig(projectPath, ext) {
   }
 }
 
-async function configurePackageJson(projectPath, language) {
+async function configurePackageJson(projectPath, language, framework = "vite") {
+  const fw = normalizeFramework(framework);
   const pkgPath = path.join(projectPath, "package.json");
   try {
     const content = await readFileContent(pkgPath);
@@ -170,9 +192,15 @@ async function configurePackageJson(projectPath, language) {
     // (Next.js bases ship next dev/build/start) or merged overlay fragments
     // (e.g. the bundler-aware dev script). React/Vite bases already carry the
     // vite commands, so this is a no-op there too.
-    pkg.scripts.dev ??= "vite";
-    pkg.scripts.build ??= "vite build";
-    pkg.scripts.preview ??= "vite preview";
+    if (fw.name !== "next") {
+      pkg.scripts.dev ??= "vite";
+      pkg.scripts.build ??= "vite build";
+      pkg.scripts.preview ??= "vite preview";
+    } else {
+      if (pkg.scripts.preview && pkg.scripts.preview.includes("vite")) {
+        delete pkg.scripts.preview;
+      }
+    }
 
     if (language === "ts") {
       pkg.scripts.typecheck ??= "tsc -b";

@@ -57,7 +57,7 @@ async function generate(responses, baseApp, projectPath) {
   });
   await configureProject(projectPath, responses.language, responses.cssFramework);
   await cleanupBoilerplate(projectPath);
-  await copyEnvExample(projectPath, TEMPLATES_DIR);
+  await copyEnvExample(projectPath, TEMPLATES_DIR, responses);
   if (responses.readme) await generateReadme(projectPath, "app", responses);
   process.chdir(REPO);
   return projectPath;

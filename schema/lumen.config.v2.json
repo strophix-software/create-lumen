@@ -79,7 +79,6 @@
           "enum": [
             "feature-based",
             "type-based",
-            "hybrid",
             "none"
           ]
         },
@@ -88,7 +87,6 @@
           "enum": [
             "feature-based",
             "type-based",
-            "hybrid",
             "none"
           ]
         },
@@ -261,7 +259,8 @@
           "default": "postgresql",
           "type": "string",
           "enum": [
-            "postgresql"
+            "postgresql",
+            "supabase"
           ]
         }
       },

@@ -155,7 +155,7 @@ test("injectLinter (Next.js) injects eslint.config.mjs and lint scripts", async 
 
   assert.ok(await fsp.stat(path.join(dir, "eslint.config.mjs")));
   const cfg = await read(dir, "eslint.config.mjs");
-  assert.ok(cfg.includes("next/core-web-vitals"));
+  assert.ok(cfg.includes("eslint-config-next"));
   const pkg = JSON.parse(await read(dir, "package.json"));
   assert.equal(pkg.scripts.lint, "eslint .");
   assert.equal(pkg.scripts["lint:fix"], "eslint . --fix");
@@ -212,6 +212,10 @@ test("injectUiKit: writes components.json, lib/utils cn helper, and Button/Card 
   assert.equal(compJson.tailwind.css, "src/shared/styles/globals.css");
   assert.equal(compJson.aliases.utils, "@/lib/utils");
   assert.equal(compJson.aliases.ui, "@/shared/components/ui");
+  assert.equal(
+    compJson.registries?.["@lumen"],
+    "https://raw.githubusercontent.com/strophix-software/lumen-registry/main/public/r"
+  );
 
   // cn helper
   const utilsCode = await fsp.readFile(path.join(dir, "src", "lib", "utils.ts"), "utf8");
@@ -243,6 +247,10 @@ test("injectUiKit: writes components.json and primitives for type-based JS", asy
   assert.equal(compJson.tsx, false);
   assert.equal(compJson.tailwind.css, "src/styles/globals.css");
   assert.equal(compJson.aliases.ui, "@/ui");
+  assert.equal(
+    compJson.registries?.["@lumen"],
+    "https://raw.githubusercontent.com/strophix-software/lumen-registry/main/public/r"
+  );
 
   assert.ok(await fsp.stat(path.join(dir, "src", "lib", "utils.js")));
   assert.ok(await fsp.stat(path.join(dir, "src", "ui", "Button.jsx")));
@@ -264,8 +272,12 @@ test("injectUiKit: rejects shadcn when cssFramework is not tailwind", async () =
 test("getComponentsJson: returns Next App Router contract stub when framework is next", () => {
   const stub = getComponentsJson({ framework: "next", architecture: "feature-based", language: "ts" });
   assert.equal(stub.rsc, true);
-  assert.equal(stub.tailwind.css, "app/globals.css");
-  assert.equal(stub.aliases.components, "@/components");
-  assert.equal(stub.aliases.ui, "@/components/ui");
+  assert.equal(stub.tailwind.css, "src/app/globals.css");
+  assert.equal(stub.aliases.components, "@/shared/components");
+  assert.equal(stub.aliases.ui, "@/shared/components/ui");
+  assert.equal(
+    stub.registries?.["@lumen"],
+    "https://raw.githubusercontent.com/strophix-software/lumen-registry/main/public/r"
+  );
 });
 

@@ -13,7 +13,7 @@ export const FRAMEWORK_BUNDLERS = ["turbopack", "webpack"];
 export const FRAMEWORK_ADAPTERS = ["node", "vercel", "cloudflare", "static"];
 
 export const STYLING_ENGINES = ["tailwind", "none"];
-export const ARCHITECTURE_PRESETS = ["feature-based", "type-based", "hybrid", "none"];
+export const ARCHITECTURE_PRESETS = ["feature-based", "type-based", "none"];
 // Legacy alias: docs used architecture.type, canonical is architecture.preset.
 // Keep both in sync; parseManifest normalizes to expose both keys.
 export const ARCHITECTURE_TYPES = ARCHITECTURE_PRESETS;
@@ -24,7 +24,7 @@ export const TOOLING_LANGUAGES = ["ts", "js"];
 export const TOOLING_LINTERS = ["eslint", "oxlint", "biome", "none"];
 export const TOOLING_FORMATTERS = ["prettier", "oxfmt", "none"];
 export const DATABASE_ORMS = ["prisma", "none"];
-export const DATABASE_PROVIDERS = ["postgresql"];
+export const DATABASE_PROVIDERS = ["postgresql", "supabase"];
 
 // ---------------------------------------------------------------------------
 // Sub-schemas
@@ -212,7 +212,7 @@ export const manifestSchemaV2 = z
     const allowedByFramework =
       framework.name === "react"
         ? ["feature-based", "type-based", "none"]
-        : ["feature-based", "hybrid", "none"];
+        : ["feature-based", "none"];
     if (!allowedByFramework.includes(archValue)) {
       ctx.addIssue({
         code: "custom",

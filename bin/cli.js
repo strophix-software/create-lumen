@@ -32,12 +32,7 @@ console.log(
 const { main } = await import("@/main.js");
 
 main({
-  quickSetup: cliArgs.quickSetup,
-  projectName: cliArgs.projectName,
-  manifest: cliArgs.manifest,
-  template: cliArgs.template,
-  framework: cliArgs.framework,
-  arch: cliArgs.arch,
+  ...cliArgs,
 }).catch((e) => {
   console.error(chalk.red("\nError:"), e.message || e);
   process.exit(1);

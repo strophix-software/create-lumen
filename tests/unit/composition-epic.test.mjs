@@ -91,7 +91,7 @@ async function generateProject(responses, baseApp, targetDir) {
   });
   await configureProject(targetDir, responses.language, responses.cssFramework);
   await cleanupBoilerplate(targetDir);
-  await copyEnvExample(targetDir, TEMPLATES_DIR);
+  await copyEnvExample(targetDir, TEMPLATES_DIR, responses);
   await emitManifest(targetDir, responses);
   if (responses.readme) {
     await generateReadme(targetDir, responses.projectName || "app", responses);

@@ -16,7 +16,7 @@ export function resolvePaths({ architecture, framework = {} } = {}) {
   const variant = framework.variant || (fwName === "next" ? "app-router" : "vite");
 
   // Helper to pick Next.js pages root based on variant
-  const nextPagesForVariant = (v) => (v === "pages-router" ? "pages" : "app");
+  const nextPagesForVariant = (v) => (v === "pages-router" ? "src/pages" : "src/app");
   const isNext = fwName === "next";
 
   // -- feature-based (React + Vite canonical, also Next feature-based)
@@ -66,30 +66,6 @@ export function resolvePaths({ architecture, framework = {} } = {}) {
       hooks: "src/hooks",
       pages: "src/pages",
       ui: "src/ui",
-    };
-  }
-
-  // -- hybrid (Next.js: feature + shared). For React, fallback to feature-based
-  if (arch === "hybrid") {
-    if (isNext) {
-      const nextRoot = nextPagesForVariant(variant);
-      return {
-        features: "src/features",
-        components: "src/shared/components",
-        services: "src/shared/services",
-        hooks: "src/shared/hooks",
-        pages: nextRoot,
-        ui: "src/shared/components/ui",
-      };
-    }
-    // React hybrid = hybrid not valid, but map to feature-based for determinism
-    return {
-      features: "src/features",
-      components: "src/shared/components",
-      services: "src/shared/services",
-      hooks: "src/shared/hooks",
-      pages: "src/app/router",
-      ui: "src/shared/components/ui",
     };
   }
 

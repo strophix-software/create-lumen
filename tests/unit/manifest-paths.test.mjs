@@ -38,28 +38,16 @@ test("resolvePaths: component-based react/vite (backward compat fallback)", () =
   });
 });
 
-test("resolvePaths: feature-based next app-router -> app at root", () => {
+test("resolvePaths: feature-based next app-router -> app at src/app", () => {
   const p = resolvePaths({ architecture: "feature-based", framework: { name: "next", variant: "app-router" } });
-  assert.equal(p.pages, "app");
+  assert.equal(p.pages, "src/app");
   assert.equal(p.features, "src/features");
   assert.equal(p.ui, "src/shared/components/ui");
 });
 
-test("resolvePaths: feature-based next pages-router -> pages at root", () => {
+test("resolvePaths: feature-based next pages-router -> pages at src/pages", () => {
   const p = resolvePaths({ architecture: "feature-based", framework: { name: "next", variant: "pages-router" } });
-  assert.equal(p.pages, "pages");
-});
-
-test("resolvePaths: hybrid next app-router", () => {
-  const p = resolvePaths({ architecture: "hybrid", framework: { name: "next", variant: "app-router" } });
-  assert.deepEqual(p, {
-    features: "src/features",
-    components: "src/shared/components",
-    services: "src/shared/services",
-    hooks: "src/shared/hooks",
-    pages: "app",
-    ui: "src/shared/components/ui",
-  });
+  assert.equal(p.pages, "src/pages");
 });
 
 test("resolvePaths: none react", () => {
@@ -74,14 +62,14 @@ test("resolvePaths: none react", () => {
   });
 });
 
-test("resolvePaths: none next pages-router -> pages root", () => {
+test("resolvePaths: none next pages-router -> pages at src/pages", () => {
   const p = resolvePaths({ architecture: "none", framework: { name: "next", variant: "pages-router" } });
-  assert.equal(p.pages, "pages");
+  assert.equal(p.pages, "src/pages");
   assert.equal(p.features, "src");
 });
 
 test("resolvePaths: lumen-cli can resolve every target from manifest alone (keys present)", () => {
-  for (const arch of ["feature-based", "type-based", "component-based", "hybrid", "none"]) {
+  for (const arch of ["feature-based", "type-based", "component-based", "none"]) {
     for (const fw of [{ name: "react", variant: "vite" }, { name: "next", variant: "app-router" }, { name: "next", variant: "pages-router" }]) {
       const p = resolvePaths({ architecture: arch, framework: fw });
       for (const k of ["features", "components", "services", "hooks", "pages", "ui"]) {

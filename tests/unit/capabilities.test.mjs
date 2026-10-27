@@ -54,14 +54,14 @@ test("capabilities: architecture compatibility per framework", () => {
 
   // Next.js App Router
   assert.equal(isOptionCompatible(next, "architecture", "feature-based"), true);
-  assert.equal(isOptionCompatible(next, "architecture", "hybrid"), true);
+  assert.equal(isOptionCompatible(next, "architecture", "hybrid"), false);
   assert.equal(isOptionCompatible(next, "architecture", "none"), true);
   assert.equal(isOptionCompatible(next, "architecture", "type-based"), false);
 
   // Next.js Pages Router
   const nextPages = { name: "next", variant: "pages-router" };
   assert.equal(isOptionCompatible(nextPages, "architecture", "feature-based"), true);
-  assert.equal(isOptionCompatible(nextPages, "architecture", "hybrid"), true);
+  assert.equal(isOptionCompatible(nextPages, "architecture", "hybrid"), false);
   assert.equal(isOptionCompatible(nextPages, "architecture", "none"), true);
   assert.equal(isOptionCompatible(nextPages, "architecture", "type-based"), false);
 });
@@ -158,7 +158,7 @@ test("capabilities: validateCompatibility rejects bad combos for React and Next"
   assert.equal(nextAppValid.valid, true);
 
   const nextAppWebpackStatic = validateCompatibility(nextApp, {
-    architecture: "hybrid",
+    architecture: "feature-based",
     bundler: "webpack",
     adapter: "static",
     reactCompiler: false,

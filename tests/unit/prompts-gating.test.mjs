@@ -95,18 +95,19 @@ test("filterCompatibleChoices: architecture type-based compatible with React/Vit
   assert.deepEqual(reactValues, ["feature-based", "type-based", "none"]);
   assert.equal(reactValues.includes("type-based"), true);
 
-  // Next App Router: allows feature-based, hybrid, none; excludes type-based
+  // Next App Router: allows feature-based, none; excludes type-based and hybrid
   const nextChoices = filterCompatibleChoices("next:app-router", "architecture", choices);
   const nextValues = nextChoices.map((c) => c.value);
-  assert.deepEqual(nextValues, ["feature-based", "hybrid", "none"]);
+  assert.deepEqual(nextValues, ["feature-based", "none"]);
   assert.equal(nextValues.includes("type-based"), false);
+  assert.equal(nextValues.includes("hybrid"), false);
 
   // Primitive strings array also works
   const primitiveChoices = ["feature-based", "type-based", "hybrid", "none"];
   const reactPrimitives = filterCompatibleChoices("react:vite", "architecture", primitiveChoices);
   assert.deepEqual(reactPrimitives, ["feature-based", "type-based", "none"]);
   const nextPrimitives = filterCompatibleChoices("next:app-router", "architecture", primitiveChoices);
-  assert.deepEqual(nextPrimitives, ["feature-based", "hybrid", "none"]);
+  assert.deepEqual(nextPrimitives, ["feature-based", "none"]);
 });
 
 test("filterCompatibleChoices: styling bootstrap excluded everywhere post-#51 (Tailwind-first)", () => {

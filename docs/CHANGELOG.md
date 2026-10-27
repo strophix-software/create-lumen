@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [2.0.0-beta.3] — 2026-10-26
+
+### Added
+
+- **Official `@lumen` registry in `components.json` for Shadcn Registry v2** (#69) — automatically configures `registries: { "@lumen": "https://raw.githubusercontent.com/strophix-software/lumen-registry/main/public/r" }` in `components.json` for both Next.js and React/Vite, enabling 100% interoperability with `lumen-cli` (`lumen g ui <name>`) and standard Shadcn CLI (`npx shadcn@latest add @lumen/<block>`).
+- **Supabase provider support for Prisma ORM in Next.js** — added `--database prisma` with `provider: "supabase"` support, configuring dual connections (`DATABASE_URL` for Supavisor transaction pooler on port 6543 with `?pgbouncer=true`, and `DIRECT_URL` for direct session connection on port 5432), updated `prisma/schema.prisma` with `directUrl`, and `.env.example`.
+- **Command shortcuts in `package.json`** — wired `format` (`"biome check --write ."`) and `format:check` (`"biome check ."`) when Biome is selected without Prettier, and added `"test:watch"` for Vitest aligning with Jest.
+
+### Changed & Refactored
+
+- **Purged `hybrid` architecture across the entire ecosystem** — removed `hybrid` preset from manifest v2 schema (`ARCHITECTURE_TYPES`), CLI options, templates, capabilities, and documentation. Architecture choice is now cleanly scoped: React (`feature-based`, `type-based`, `none`) and Next.js (`feature-based`, `none`).
+- **Next.js canonical manifest paths** — updated `manifest.paths.pages` to resolve to `"src/app"` (App Router) and `"src/pages"` (Pages Router) instead of root `"app"` / `"pages"`.
+- **Biome v2 schema upgrade & Tailwind directives** — upgraded `biome.json` to schema `https://biomejs.dev/schemas/2.0.0/schema.json` with `css.parser.tailwindDirectives: true` and canonical formatting on scaffolding.
+- **Modern Next.js Flat ESLint configuration** — updated Next.js ESLint configuration to flat config `eslint.config.mjs` with `FlatCompat` instead of deprecated `.eslintrc.json`.
+- **CLI flag enhancements** — supported `--formatter` (including `--formatter none`), `--linter` (`-l`), and `--css` (`-c`) flags with automatic prompt bypassing and response overlays.
+
+### Fixed
+
+- **Purged `App.*` file leakage in Next.js minimal `none` architecture** — prevented template leakage of Vite `App.tsx`, `App.jsx`, and `App.css` in Next.js scaffolds.
+- **Pinned Prisma to v6** — updated Prisma dependencies to `^6.0.0` for Node 20+ engine compatibility.
+- **Dynamic harness test command** — dynamically resolves harness test command in `lumen.config.json` based on the selected test runner (`vitest` vs `jest`).
+- **Prevented Vite configuration leakage in Next.js** — suppressed Vite configuration overlays and scripts (`preview`) when scaffolding Next.js projects.
+
 ## [2.0.0-beta.2] — 2026-10-26
 
 ### Added

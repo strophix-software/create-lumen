@@ -166,7 +166,7 @@ export function resolveFragments(responses = {}, templatesDir) {
   });
 
   // =========================================================================
-  // Layer 3: Architecture (feature-based / type-based / hybrid / none)
+  // Layer 3: Architecture (feature-based / type-based / none)
   // =========================================================================
   const archSrcDir = path.join(templatesDir, "architectures", architecture, "src");
   const archMainSrc = path.join(templatesDir, "architectures", architecture, `main.${ext}`);
@@ -178,6 +178,11 @@ export function resolveFragments(responses = {}, templatesDir) {
     targetDir: "src",
     action: async ({ projectPath }) => {
       if (fw.name === "next") {
+        try { await fsp.rm(path.join(projectPath, "src", "main.tsx"), { force: true }); } catch {}
+        try { await fsp.rm(path.join(projectPath, "src", "main.jsx"), { force: true }); } catch {}
+        try { await fsp.rm(path.join(projectPath, "src", "App.tsx"), { force: true }); } catch {}
+        try { await fsp.rm(path.join(projectPath, "src", "App.jsx"), { force: true }); } catch {}
+        try { await fsp.rm(path.join(projectPath, "src", "App.css"), { force: true }); } catch {}
         if (fw.variant === "pages-router") {
           try { await fsp.rm(path.join(projectPath, "src", "app"), { recursive: true, force: true }); } catch {}
         } else {
@@ -428,9 +433,14 @@ export function resolveFragments(responses = {}, templatesDir) {
         const envExamplePath = path.join(projectPath, ".env.example");
         const envLines = [
           "",
-          "# Database (Prisma + PostgreSQL / Supabase)",
-          'DATABASE_URL="postgresql://postgres:[YOUR-PASSWORD]@db.[YOUR-PROJECT-REF].supabase.co:5432/postgres"',
-          'DIRECT_URL="postgresql://postgres:[YOUR-PASSWORD]@db.[YOUR-PROJECT-REF].supabase.co:5432/postgres"',
+          "# Database (Prisma + PostgreSQL)",
+          "# Local development with PostgreSQL or Docker compose (docker compose up -d db):",
+          'DATABASE_URL="postgresql://postgres:postgres@localhost:5432/app?schema=public"',
+          'DIRECT_URL="postgresql://postgres:postgres@localhost:5432/app?schema=public"',
+          "",
+          "# Supabase / cloud PostgreSQL with connection pooling (Transaction mode / port 6543):",
+          '# DATABASE_URL="postgresql://postgres:[YOUR-PASSWORD]@db.[YOUR-PROJECT-REF].supabase.co:6543/postgres?pgbouncer=true"',
+          '# DIRECT_URL="postgresql://postgres:[YOUR-PASSWORD]@db.[YOUR-PROJECT-REF].supabase.co:5432/postgres"',
         ].join("\n");
         try {
           let envContent = "";
@@ -452,7 +462,7 @@ export function resolveFragments(responses = {}, templatesDir) {
     const testingDir = path.join(templatesDir, "conditional", "testing", testingFramework);
     const testScripts =
       testingFramework === "vitest"
-        ? { test: "vitest", "test:run": "vitest run" }
+        ? { test: "vitest", "test:run": "vitest run", "test:watch": "vitest" }
         : { test: "jest", "test:watch": "jest --watch" };
 
     fragments.push({
@@ -519,7 +529,11 @@ export function resolveFragments(responses = {}, templatesDir) {
           try {
             await fsp.access(testSrc);
             const testDest = path.join(projectPath, "src", "__tests__", `${testFileName}.test.${ext}`);
-            await writeFileRecursive(testDest, await fsp.readFile(testSrc, "utf8"));
+            let testContent = await fsp.readFile(testSrc, "utf8");
+            if (responses.routeGroups === true && fw.variant === "app-router") {
+              testContent = testContent.replace("@/app/page", "@/app/(public)/page");
+            }
+            await writeFileRecursive(testDest, testContent);
           } catch {}
         } else {
           // Architecture-scoped test file
@@ -578,14 +592,24 @@ export function resolveFragments(responses = {}, templatesDir) {
       },
     });
   } else if (responses.linter === "biome") {
+    const isBiomeFormatter =
+      !responses.formatter ||
+      responses.formatter === "none" ||
+      responses.formatter === "biome";
+    const biomeScripts = {
+      lint: "biome check .",
+      "lint:fix": "biome check --write .",
+    };
+    if (isBiomeFormatter) {
+      biomeScripts.format = "biome check --write .";
+      biomeScripts["format:check"] = "biome check .";
+    }
+
     fragments.push({
       scope: FRAGMENT_SCOPES.TOOLING,
       category: "linter",
       id: "tooling:linter:biome",
-      scripts: {
-        lint: "biome check .",
-        "lint:fix": "biome check --write .",
-      },
+      scripts: biomeScripts,
       action: async ({ projectPath }) => {
         const configSrc = path.join(templatesDir, "conditional", "linting", "biome", "biome.json");
         try {
@@ -729,6 +753,16 @@ export function resolveFragments(responses = {}, templatesDir) {
         try {
           await fsp.rm(path.join(projectPath, "src", "app", "page.tsx"), { force: true });
         } catch {}
+        // Adjust existing test file if it imported @/app/page before route groups was applied
+        for (const testExt of ["tsx", "jsx", "ts", "js"]) {
+          const testPath = path.join(projectPath, "src", "__tests__", `page.test.${testExt}`);
+          try {
+            const content = await fsp.readFile(testPath, "utf8");
+            if (content.includes("@/app/page")) {
+              await fsp.writeFile(testPath, content.replace(/@\/app\/page/g, "@/app/(public)/page"), "utf8");
+            }
+          } catch {}
+        }
       },
     });
   }

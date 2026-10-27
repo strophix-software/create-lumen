@@ -117,22 +117,6 @@ ${nestedTree(appChildren)}
 ${nestedTree(shared)}`;
   }
 
-  if (responses.architecture === "hybrid") {
-    const shared = [
-      "components/ # Shared UI components",
-      "hooks/    # Shared custom hooks",
-      "layouts/  # High-level layout wrappers",
-      "stores/   # Global state stores",
-      `styles/   # ${responses.cssFramework === "none" ? "main.css (reset) + themes.css (CSS variables)" : "globals.css (framework directives) + themes.css"}`,
-      "types/    # Global type definitions",
-      "utils/    # Pure utility functions",
-    ];
-    return `src/
-├── features/     # Feature modules (domain boundaries)
-└── shared/       # Reusable, business-agnostic resources
-${nestedTree(shared)}`;
-  }
-
   if (responses.architecture === "none") {
     return `src/
 ├── App.${responses.language === "ts" ? "tsx" : "jsx"}          # Root application component

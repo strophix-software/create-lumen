@@ -15,25 +15,34 @@ const FORMAT_COMMANDS = {
 };
 
 /**
- * Build default harness commands from tooling choices.
+ * Build default harness commands from tooling choices and test framework.
  * Skips lint/format when tooling is "none"; skips types when language is not "ts".
- * Test + build are always included so commands.length >= 1.
- * @param {{ linter?: string, formatter?: string, language?: string }} tooling
+ * Skips test when testing is "none" (or not configured).
+ * Build is always included so commands.length >= 1.
+ * @param {{ linter?: string, formatter?: string, language?: string, testing?: string }} tooling
+ * @param {string} [testing]
  * @returns {Array<{ name: string, command: string, required: boolean }>}
  */
-export function defaultHarnessCommands(tooling = {}) {
+export function defaultHarnessCommands(tooling = {}, testing = null) {
   const { linter = "none", formatter = "none", language = "ts" } = tooling;
+  const testFramework = testing ?? tooling.testing ?? "none";
   const commands = [];
   if (linter && linter !== "none" && LINT_COMMANDS[linter]) {
     commands.push({ name: "lint", command: LINT_COMMANDS[linter], required: true });
   }
   if (formatter && formatter !== "none" && FORMAT_COMMANDS[formatter]) {
     commands.push({ name: "format", command: FORMAT_COMMANDS[formatter], required: true });
+  } else if (linter === "biome" && (!formatter || formatter === "none" || formatter === "biome")) {
+    commands.push({ name: "format", command: "biome check --write .", required: true });
   }
   if (language === "ts") {
     commands.push({ name: "types", command: "tsc -b", required: true });
   }
-  commands.push({ name: "test", command: "vitest run", required: true });
+  if (testFramework === "vitest") {
+    commands.push({ name: "test", command: "vitest run", required: true });
+  } else if (testFramework === "jest") {
+    commands.push({ name: "test", command: "npm test", required: true });
+  }
   commands.push({ name: "build", command: "npm run build", required: true });
   return commands.length > 0 ? commands : [...HARNESS_DEFAULT_COMMANDS];
 }
@@ -99,8 +108,15 @@ export function buildManifest(responses, opts = {}) {
     formatter: responses.formatter || "none",
   };
 
+  const resolvedTesting =
+    responses.testing !== undefined
+      ? responses.testing
+      : framework.name === "next"
+      ? "none"
+      : "vitest";
+
   const harness = responses.harness ?? {
-    commands: defaultHarnessCommands(tooling),
+    commands: defaultHarnessCommands(tooling, resolvedTesting),
   };
 
   const manifest = {
@@ -120,7 +136,7 @@ export function buildManifest(responses, opts = {}) {
   if (responses.database && responses.database !== "none") {
     manifest.database = {
       orm: responses.database,
-      provider: "postgresql",
+      provider: responses.databaseProvider || "postgresql",
     };
   }
   if (typeof responses.docker === "boolean") manifest.docker = responses.docker;

@@ -17,12 +17,20 @@ async function exists(p) {
 // is already on PATH (e.g. verification harnesses resolving from a vendored
 // node_modules symlink).
 export async function runProjectFormat(projectPath, responses) {
-  if (!responses.formatter || responses.formatter === "none") return;
+  if (responses.formatter && responses.formatter !== "none") {
+    const formatter = responses.formatter;
+    const bin = path.join(projectPath, "node_modules", ".bin", formatter);
+    const command = (await exists(bin)) ? bin : formatter;
+    const args = formatter === "prettier" ? ["--write", "."] : ["."];
 
-  const formatter = responses.formatter;
-  const bin = path.join(projectPath, "node_modules", ".bin", formatter);
-  const command = (await exists(bin)) ? bin : formatter;
-  const args = formatter === "prettier" ? ["--write", "."] : ["."];
+    await execa(command, args, { cwd: projectPath, stdio: "pipe" });
+    return;
+  }
 
-  await execa(command, args, { cwd: projectPath, stdio: "pipe" });
+  // When Biome is the linter and no separate formatter is chosen, use Biome's native check --write
+  if (responses.linter === "biome") {
+    const bin = path.join(projectPath, "node_modules", ".bin", "biome");
+    const command = (await exists(bin)) ? bin : "biome";
+    await execa(command, ["check", "--write", "."], { cwd: projectPath, stdio: "pipe" });
+  }
 }

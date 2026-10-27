@@ -244,12 +244,14 @@ test("cli-args: parses bundler, adapter, react-compiler, agent-docs, and linter 
   assert.equal(parsed2.adapter, "static");
 });
 
-test("cli-args: parses --database and --db flags", () => {
-  const p1 = parseCliArgs(["--database", "prisma"]);
+test("cli-args: parses --database, --db, and --db-provider flags", () => {
+  const p1 = parseCliArgs(["--database", "prisma", "--db-provider", "supabase"]);
   assert.equal(p1.database, "prisma");
+  assert.equal(p1.databaseProvider, "supabase");
 
-  const p2 = parseCliArgs(["--db", "none"]);
+  const p2 = parseCliArgs(["--db", "none", "--database-provider", "postgresql"]);
   assert.equal(p2.database, "none");
+  assert.equal(p2.databaseProvider, "postgresql");
 });
 
 test("cli-args: manifestToResponses maps database.orm to responses.database", () => {
@@ -279,6 +281,18 @@ test("cli-args: manifestToResponses maps database.orm to responses.database", ()
     "next-prisma-app"
   );
   assert.equal(nextWithPrisma.database, "prisma");
+  assert.equal(nextWithPrisma.databaseProvider, "postgresql");
+
+  const nextWithSupabase = manifestToResponses(
+    {
+      ...base,
+      framework: { name: "next", variant: "app-router" },
+      database: { orm: "prisma", provider: "supabase" },
+    },
+    "next-supabase-app"
+  );
+  assert.equal(nextWithSupabase.database, "prisma");
+  assert.equal(nextWithSupabase.databaseProvider, "supabase");
 
   const reactWithPrisma = manifestToResponses(
     {
@@ -362,4 +376,17 @@ test("cli-args: parses --route-groups boolean flag and maps manifest.routeGroups
     "react-app"
   );
   assert.equal(reactResponses.routeGroups, undefined);
+});
+
+test("cli-args: parses --formatter, --linter, -l/--language, -c/--css flags", () => {
+  const p1 = parseCliArgs(["--formatter", "none", "--linter", "oxlint", "-l", "js", "-c", "none"]);
+  assert.equal(p1.formatter, "none");
+  assert.equal(p1.linter, "oxlint");
+  assert.equal(p1.language, "js");
+  assert.equal(p1.cssFramework, "none");
+
+  const p2 = parseCliArgs(["--formatter", "oxfmt", "--language", "ts", "--css", "tailwind"]);
+  assert.equal(p2.formatter, "oxfmt");
+  assert.equal(p2.language, "ts");
+  assert.equal(p2.cssFramework, "tailwind");
 });
