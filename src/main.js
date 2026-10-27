@@ -1,5 +1,6 @@
 import { isCancel, log, spinner, text } from "@clack/prompts";
 import chalk from "chalk";
+import { promises as fsp } from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -44,6 +45,47 @@ export function resolveProjectName({ quickSetup = false, projectName: nameArg, c
   return null;
 }
 
+async function isDirectoryEmpty(dir) {
+  try {
+    const files = await fsp.readdir(dir);
+    return files.length === 0;
+  } catch {
+    return false;
+  }
+}
+
+export async function resolveTargetFolder({
+  nameArg,
+  cwd = process.cwd(),
+  isNonInteractive = false,
+  rawArgs,
+} = {}) {
+  const rawProjectName = resolveProjectName({
+    quickSetup: isNonInteractive,
+    projectName: nameArg,
+    cwd,
+    rawArgs,
+  });
+
+  if (!rawProjectName) return null;
+
+  const isCurrentDirDot = rawProjectName === ".";
+  const currentDirBasename = path.basename(cwd).trim();
+  const isMatchingDir = rawProjectName === currentDirBasename;
+  const isTargetCurrentDir =
+    isCurrentDirDot || (isMatchingDir && (await isDirectoryEmpty(cwd)));
+
+  const projectPath = isTargetCurrentDir ? cwd : path.resolve(cwd, rawProjectName);
+  const projectName = isCurrentDirDot ? (currentDirBasename || "my-app") : rawProjectName;
+
+  return {
+    rawProjectName,
+    projectName,
+    projectPath,
+    isTargetCurrentDir,
+  };
+}
+
 export async function main(options = {}) {
   const {
     quickSetup = false,
@@ -74,27 +116,36 @@ export async function main(options = {}) {
   const currentDir = options.cwd || process.cwd();
 
   // 1. Project name
-  let projectName = resolveProjectName({
+  let rawProjectName = resolveProjectName({
     quickSetup: isNonInteractive,
     projectName: nameArg,
     cwd: currentDir,
   });
 
-  if (projectName) {
-    log.step(chalk.gray(`Project name: ${chalk.bold(projectName)}`));
+  if (rawProjectName) {
+    log.step(chalk.gray(`Project name: ${chalk.bold(rawProjectName)}`));
   } else {
-    projectName = await text({
+    rawProjectName = await text({
       message: "What is your project name?",
       placeholder: "my-app",
       validate(value) {
         if (!value || !value.trim()) return "Project name is required!";
       },
     });
-    if (isCancel(projectName)) onCancel();
+    if (isCancel(rawProjectName)) onCancel();
   }
 
+  const isCurrentDirDot = rawProjectName === ".";
+  const currentDirBasename = path.basename(currentDir).trim();
+  const isMatchingDir = rawProjectName === currentDirBasename;
+  const isTargetCurrentDir =
+    isCurrentDirDot || (isMatchingDir && (await isDirectoryEmpty(currentDir)));
+
+  const projectPath = isTargetCurrentDir ? currentDir : path.resolve(currentDir, rawProjectName);
+  const projectName = isCurrentDirDot ? (currentDirBasename || "my-app") : rawProjectName;
+
   // 2. Handle existing folder
-  await confirmEmptyFolder(projectName);
+  await confirmEmptyFolder(projectPath, currentDir);
 
   // 3. Collect user preferences (interactive or non-interactive)
   let responses;
@@ -133,8 +184,6 @@ export async function main(options = {}) {
   if (reactCompilerArg !== null && reactCompilerArg !== undefined) responses.reactCompiler = reactCompilerArg;
   if (agentDocsArg !== null && agentDocsArg !== undefined) responses.agentDocs = agentDocsArg;
 
-  const projectPath = path.resolve(currentDir, projectName);
-
   // 4. Scaffold the base project (provider-owned bases; Vite shells out, Next copies)
   const fw = normalizeFramework(
     responses.framework || { name: responses.frameworkName, variant: responses.frameworkVariant }
@@ -158,7 +207,7 @@ export async function main(options = {}) {
   } else {
     createSpin.start("Creating your Vite + React project...");
     try {
-      await runViteCreate(projectPath, projectName, pkg, responses.language);
+      await runViteCreate(projectPath, projectName, pkg, responses.language, isTargetCurrentDir);
       createSpin.stop(chalk.green("Project created successfully!"));
     } catch (err) {
       createSpin.stop(chalk.red("Failed to create project."));
@@ -283,7 +332,7 @@ export async function main(options = {}) {
   try {
     await configureProject(
       projectPath,
-      responses.language,
+      responses,
       responses.cssFramework,
       responses.framework || { name: responses.frameworkName, variant: responses.frameworkVariant }
     );

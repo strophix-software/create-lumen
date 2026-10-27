@@ -7,7 +7,7 @@ import { NextResponse } from "next/server";
  * - Unauthenticated requests to private or admin routes redirect to /login
  * - Authenticated requests lacking the "admin" role redirect away from /admin
  */
-export function middleware(request) {
+export function proxy(request) {
   const { pathname } = request.nextUrl;
 
   const authToken = request.cookies.get("auth-token")?.value;
@@ -36,6 +36,9 @@ export function middleware(request) {
 
   return NextResponse.next();
 }
+
+// Backward compatibility alias for runtime/tooling expectations
+export const middleware = proxy;
 
 export const config = {
   matcher: [

@@ -39,5 +39,18 @@ export async function cleanupBoilerplate(projectPath, responses = {}) {
         await deleteIfExists(`${projectPath}/src/app/providers`);
       }
     }
+
+    const hasProxy =
+      (await fsp.stat(path.join(projectPath, "src", "proxy.ts")).catch(() => false)) ||
+      (await fsp.stat(path.join(projectPath, "src", "proxy.js")).catch(() => false)) ||
+      (await fsp.stat(path.join(projectPath, "proxy.ts")).catch(() => false)) ||
+      (await fsp.stat(path.join(projectPath, "proxy.js")).catch(() => false));
+
+    if (hasProxy) {
+      await deleteIfExists(`${projectPath}/src/middleware.ts`);
+      await deleteIfExists(`${projectPath}/src/middleware.js`);
+      await deleteIfExists(`${projectPath}/middleware.ts`);
+      await deleteIfExists(`${projectPath}/middleware.js`);
+    }
   }
 }

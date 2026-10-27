@@ -586,14 +586,21 @@ test("composition: Next.js App Router with routeGroups emits route group layouts
     assert.ok(await fsp.stat(path.join(dir, "src", "app", "(private)", "layout.tsx")).catch(() => false));
     assert.ok(await fsp.stat(path.join(dir, "src", "app", "(admin)", "layout.tsx")).catch(() => false));
 
-    // 3. Auth proxy middleware must exist and export config matcher
+    // 3. Auth proxy must exist as proxy.ts and export proxy and config matcher; middleware.ts must not exist (#70)
+    const proxyPath = path.join(dir, "src", "proxy.ts");
+    assert.ok(await fsp.stat(proxyPath).catch(() => false), "src/proxy.ts must exist");
+    const proxyContent = await fsp.readFile(proxyPath, "utf8");
+    assert.ok(proxyContent.includes("export function proxy"));
+    assert.ok(proxyContent.includes("auth-token"));
+    assert.ok(proxyContent.includes("userRole"));
+    assert.ok(proxyContent.includes("export const config"));
+
     const middlewarePath = path.join(dir, "src", "middleware.ts");
-    assert.ok(await fsp.stat(middlewarePath).catch(() => false));
-    const middlewareContent = await fsp.readFile(middlewarePath, "utf8");
-    assert.ok(middlewareContent.includes("export function middleware"));
-    assert.ok(middlewareContent.includes("auth-token"));
-    assert.ok(middlewareContent.includes("userRole"));
-    assert.ok(middlewareContent.includes("export const config"));
+    assert.equal(
+      await fsp.stat(middlewarePath).catch(() => false),
+      false,
+      "src/middleware.ts must not exist when proxy.ts is present (#70)"
+    );
   } finally {
     await fsp.rm(dir, { recursive: true, force: true });
   }
@@ -708,11 +715,18 @@ test("composition: Next.js App Router with routeGroups emits route group layouts
     assert.ok(await fsp.stat(path.join(dir, "src", "app", "(private)", "layout.jsx")).catch(() => false));
     assert.ok(await fsp.stat(path.join(dir, "src", "app", "(admin)", "layout.jsx")).catch(() => false));
 
-    // 3. Auth proxy middleware in js
+    // 3. Auth proxy in js must exist as proxy.js; middleware.js must not exist (#70)
+    const proxyPath = path.join(dir, "src", "proxy.js");
+    assert.ok(await fsp.stat(proxyPath).catch(() => false), "src/proxy.js must exist");
+    const proxyContent = await fsp.readFile(proxyPath, "utf8");
+    assert.ok(proxyContent.includes("export function proxy"));
+
     const middlewarePath = path.join(dir, "src", "middleware.js");
-    assert.ok(await fsp.stat(middlewarePath).catch(() => false));
-    const middlewareContent = await fsp.readFile(middlewarePath, "utf8");
-    assert.ok(middlewareContent.includes("export function middleware"));
+    assert.equal(
+      await fsp.stat(middlewarePath).catch(() => false),
+      false,
+      "src/middleware.js must not exist when proxy.js is present (#70)"
+    );
   } finally {
     await fsp.rm(dir, { recursive: true, force: true });
   }

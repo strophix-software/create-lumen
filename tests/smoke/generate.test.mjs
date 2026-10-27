@@ -218,17 +218,19 @@ test("offline smoke: shadcn UI kit scaffold (ts) is coherent", async () => {
   );
 
   assert.ok(await exists(path.join(out, "src/lib/utils.ts")), "src/lib/utils.ts missing");
-  assert.ok(await exists(path.join(out, "src/shared/components/ui/Button.tsx")), "Button.tsx missing");
-  assert.ok(await exists(path.join(out, "src/shared/components/ui/Card.tsx")), "Card.tsx missing");
+  assert.ok(await exists(path.join(out, "src/shared/components/ui/button.tsx")), "button.tsx missing");
+  assert.ok(await exists(path.join(out, "src/shared/components/ui/card.tsx")), "card.tsx missing");
   assert.ok(await exists(path.join(out, "src/shared/components/ui/index.ts")), "index.ts missing");
 
   // Check manifest ui kit field
   const manifestRaw = JSON.parse(await fsp.readFile(path.join(out, "lumen.config.json"), "utf8"));
   assert.equal(manifestRaw.ui?.kit, "shadcn");
 
-  // Check root tsconfig.json has paths alias
+  // Check root tsconfig.json has paths aliases matching components.json (#72)
   const rootTsconfig = JSON.parse(await fsp.readFile(path.join(out, "tsconfig.json"), "utf8"));
   assert.ok(rootTsconfig.compilerOptions?.paths?.["@/*"], "root tsconfig missing @/* alias");
+  assert.ok(rootTsconfig.compilerOptions?.paths?.["@/components/*"], "root tsconfig missing @/components/* alias (#72)");
+  assert.ok(rootTsconfig.compilerOptions?.paths?.["@/ui/*"], "root tsconfig missing @/ui/* alias (#72)");
 
   await fsp.rm(projectPath, { recursive: true, force: true });
 });
@@ -507,8 +509,13 @@ test("offline smoke: Next.js App Router scaffold with routeGroups preset and aut
   assert.ok(await exists(path.join(projectPath, "src/app/(private)/layout.tsx")), "(private)/layout.tsx missing");
   assert.ok(await exists(path.join(projectPath, "src/app/(admin)/layout.tsx")), "(admin)/layout.tsx missing");
 
-  // 3. Auth proxy middleware exists
-  assert.ok(await exists(path.join(projectPath, "src/middleware.ts")), "middleware.ts missing");
+  // 3. Auth proxy middleware exists as src/proxy.ts; middleware.ts must not exist (#70)
+  assert.ok(await exists(path.join(projectPath, "src/proxy.ts")), "proxy.ts missing");
+  assert.equal(
+    await exists(path.join(projectPath, "src/middleware.ts")),
+    false,
+    "middleware.ts must not exist when proxy.ts is generated (#70)"
+  );
 
   // 4. Manifest emitted has routeGroups: true
   const manifestRaw = await fsp.readFile(path.join(projectPath, "lumen.config.json"), "utf8");

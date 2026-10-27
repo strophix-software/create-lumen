@@ -330,8 +330,8 @@ export async function injectUiKit(
 
   await fsp.mkdir(targetUiDir, { recursive: true });
 
-  const buttonDest = path.join(targetUiDir, `Button.${codeExt}`);
-  const cardDest = path.join(targetUiDir, `Card.${codeExt}`);
+  const buttonDest = path.join(targetUiDir, `button.${codeExt}`);
+  const cardDest = path.join(targetUiDir, `card.${codeExt}`);
   const indexDest = path.join(targetUiDir, `index.${utilExt}`);
 
   const buttonTemplate = path.join(
@@ -339,14 +339,14 @@ export async function injectUiKit(
     "ui",
     "shadcn",
     "primitives",
-    `Button.${codeExt}`
+    `button.${codeExt}`
   );
   const cardTemplate = path.join(
     templatesDir,
     "ui",
     "shadcn",
     "primitives",
-    `Card.${codeExt}`
+    `card.${codeExt}`
   );
   const indexTemplate = path.join(
     templatesDir,
@@ -383,8 +383,8 @@ export async function injectUiKit(
     const fallbackUiDir = path.join(projectPath, "src", "components", "ui");
     await fsp.mkdir(fallbackUiDir, { recursive: true });
     try {
-      await fsp.copyFile(buttonDest, path.join(fallbackUiDir, `Button.${codeExt}`));
-      await fsp.copyFile(cardDest, path.join(fallbackUiDir, `Card.${codeExt}`));
+      await fsp.copyFile(buttonDest, path.join(fallbackUiDir, `button.${codeExt}`));
+      await fsp.copyFile(cardDest, path.join(fallbackUiDir, `card.${codeExt}`));
       await fsp.copyFile(indexDest, path.join(fallbackUiDir, `index.${utilExt}`));
     } catch {}
   }
